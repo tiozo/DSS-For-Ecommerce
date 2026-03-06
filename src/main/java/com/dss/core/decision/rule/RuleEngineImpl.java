@@ -1,7 +1,9 @@
 package com.dss.core.decision.rule;
 
 import com.dss.core.persistence.entity.DecisionInsightEntity;
+import com.dss.core.persistence.entity.DynamicRuleEntity;
 import com.dss.core.persistence.entity.NormalizedRecordEntity;
+import com.dss.core.persistence.repository.DynamicRuleRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +15,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RuleEngineImpl implements RuleEngine {
     
     private final Map<String, Rule> rules = new ConcurrentHashMap<>();
+    private final DynamicRuleRepository dynamicRuleRepository;
+    private final SpELRuleEvaluator spelEvaluator;
+    
+    public RuleEngineImpl(DynamicRuleRepository dynamicRuleRepository, SpELRuleEvaluator spelEvaluator) {
+        this.dynamicRuleRepository = dynamicRuleRepository;
+        this.spelEvaluator = spelEvaluator;
+    }
     
     @Override
     public void registerRule(Rule rule) {
@@ -33,6 +42,7 @@ public class RuleEngineImpl implements RuleEngine {
     public List<DecisionInsightEntity> executeRules(NormalizedRecordEntity record) {
         List<DecisionInsightEntity> insights = new ArrayList<>();
         
+        // Execute static rules
         for (Rule rule : rules.values()) {
             if (!rule.isEnabled()) {
                 continue;
@@ -43,6 +53,27 @@ public class RuleEngineImpl implements RuleEngine {
                 insight.ifPresent(insights::add);
             } catch (Exception e) {
                 log.error("Error executing rule: {}", rule.getRuleName(), e);
+            }
+        }
+        
+        // Execute dynamic rules from database
+        List<DynamicRuleEntity> dynamicRules = dynamicRuleRepository.findEnabledRules(record.getTenantId());
+        for (DynamicRuleEntity dynamicRule : dynamicRules) {
+            try {
+                if (spelEvaluator.evaluate(dynamicRule, record)) {
+                    DecisionInsightEntity insight = DecisionInsightEntity.builder()
+                        .tenantId(record.getTenantId())
+                        .recordId(record.getId())
+                        .ruleName(dynamicRule.getName())
+                        .insightType(DecisionInsightEntity.InsightType.CUSTOM)
+                        .severity(DecisionInsightEntity.Severity.WARNING)
+                        .message(dynamicRule.getDescription())
+                        .status(DecisionInsightEntity.InsightStatus.OPEN)
+                        .build();
+                    insights.add(insight);
+                }
+            } catch (Exception e) {
+                log.error("Error executing dynamic rule: {}", dynamicRule.getName(), e);
             }
         }
         

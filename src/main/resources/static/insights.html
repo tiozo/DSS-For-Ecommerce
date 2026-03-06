@@ -88,6 +88,12 @@
             text-transform: uppercase;
             letter-spacing: 0.3px;
             color: #666;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .insights-table th:hover {
+            background: #efefef;
         }
         
         .insights-table td {
@@ -101,11 +107,11 @@
         
         .severity-badge {
             display: inline-block;
-            padding: 4px 8px;
-            font-size: 11px;
+            padding: 2px 6px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
             border: 1px solid;
             width: fit-content;
         }
@@ -159,7 +165,8 @@
         
         .action-buttons {
             display: flex;
-            gap: 6px;
+            flex-direction: column;
+            gap: 4px;
         }
         
         button {
@@ -173,6 +180,7 @@
             text-transform: uppercase;
             letter-spacing: 0.3px;
             transition: all 0.2s;
+            width: 100%;
         }
         
         button:hover {
@@ -294,6 +302,16 @@
             font-size: 48px;
             margin-bottom: 16px;
         }
+        
+        .sort-icon {
+            font-size: 10px;
+            opacity: 0.5;
+            margin-left: 4px;
+        }
+        
+        .sort-icon.active {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -313,12 +331,12 @@
                     <table class="insights-table" id="openInsightsTable">
                         <thead>
                             <tr>
-                                <th>Rule</th>
-                                <th>Type</th>
-                                <th>Severity</th>
-                                <th>Message</th>
-                                <th>Created</th>
-                                <th>Action</th>
+                                <th onclick="sortInsights('ruleName')" style="width: 15%;">Rule <span class="sort-icon" id="sort-ruleName">⇅</span></th>
+                                <th onclick="sortInsights('insightType')" style="width: 10%;">Type <span class="sort-icon" id="sort-insightType">⇅</span></th>
+                                <th onclick="sortInsights('severity')" style="width: 10%;">Severity <span class="sort-icon" id="sort-severity">⇅</span></th>
+                                <th style="width: 35%;">Message</th>
+                                <th onclick="sortInsights('createdAt')" style="width: 15%;">Created <span class="sort-icon" id="sort-createdAt">⇅</span></th>
+                                <th style="width: 15%;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="openInsightsBody">
@@ -356,6 +374,9 @@
         const API_BASE = '/api';
         let currentActionInsightId = null;
         let currentActionType = null;
+        let currentInsights = [];
+        let sortField = 'createdAt';
+        let sortOrder = 'desc';
         
         function switchTab(tab) {
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -366,6 +387,35 @@
             } else {
                 loadAllInsights();
             }
+        }
+        
+        function sortInsights(field) {
+            if (sortField === field) {
+                sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortField = field;
+                sortOrder = 'asc';
+            }
+            
+            document.querySelectorAll('.sort-icon').forEach(icon => icon.classList.remove('active'));
+            const activeIcon = document.getElementById(`sort-${field}`);
+            if (activeIcon) activeIcon.classList.add('active');
+            
+            const sorted = [...currentInsights].sort((a, b) => {
+                let aVal = a[field];
+                let bVal = b[field];
+                
+                if (typeof aVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                }
+                
+                if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+                if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            renderInsights(sorted, 'openInsightsBody');
         }
         
         async function loadOpenInsights() {
@@ -391,6 +441,7 @@
         }
         
         function renderInsights(insights, containerId) {
+            currentInsights = insights;
             const tbody = document.getElementById(containerId);
             
             if (insights.length === 0) {

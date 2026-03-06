@@ -1,0 +1,42 @@
+[
+  {
+    "id": "RULE_001",
+    "name": "High Volume Order",
+    "description": "Trigger when quantity ordered exceeds 50 units.",
+    "expression": "#QUANTITYORDERED > 50",
+    "action": "UP_PRICE",
+    "severity": "INFO"
+  },
+  {
+    "id": "RULE_002",
+    "name": "High Sales Value",
+    "description": "Alert when sales exceed 5000.",
+    "expression": "#SALES > 5000",
+    "action": "UP_PRICE",
+    "severity": "WARNING"
+  },
+  {
+    "id": "RULE_003",
+    "name": "Low Unit Price",
+    "description": "Flag when unit price is below 20.",
+    "expression": "#PRICEEACH < 20",
+    "action": "LOGISTICS_OVERLOAD",
+    "severity": "INFO"
+  },
+  {
+    "id": "RULE_004",
+    "name": "Disputed Order",
+    "description": "Alert on disputed or non-shipped orders.",
+    "expression": "#STATUS == 'Disputed' || #STATUS == 'Cancelled' || #STATUS == 'On Hold'",
+    "action": "LOGISTICS_OVERLOAD",
+    "severity": "CRITICAL"
+  },
+  {
+    "id": "RULE_005",
+    "name": "Large Deal",
+    "description": "Identify large deals with high quantity and sales.",
+    "expression": "#QUANTITYORDERED > 40 && #SALES > 7000",
+    "action": "UP_PRICE",
+    "severity": "WARNING"
+  }
+]

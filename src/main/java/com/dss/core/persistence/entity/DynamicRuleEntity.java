@@ -12,17 +12,15 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "decision_insights", indexes = {
-    @Index(name = "idx_insight_tenant_id", columnList = "tenant_id"),
-    @Index(name = "idx_record_id", columnList = "record_id"),
-    @Index(name = "idx_status", columnList = "status"),
-    @Index(name = "idx_severity", columnList = "severity")
+@Table(name = "dynamic_rules", indexes = {
+    @Index(name = "idx_rule_tenant_id", columnList = "tenant_id"),
+    @Index(name = "idx_rule_name", columnList = "name")
 })
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DecisionInsightEntity {
+public class DynamicRuleEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,28 +30,19 @@ public class DecisionInsightEntity {
     private String tenantId;
     
     @Column(nullable = false)
-    private Long recordId;
+    private String name;
     
-    @Column(nullable = false)
-    private String ruleName;
-    
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private InsightType insightType;
-    
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Severity severity;
-    
-    @Column(nullable = false, columnDefinition = "text")
-    private String message;
+    @Column(columnDefinition = "text", nullable = false)
+    private String expression;
     
     @Column(columnDefinition = "text")
-    private String metadata;
+    private String description;
     
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private InsightStatus status;
+    private Boolean enabled;
+    
+    @Column(columnDefinition = "text")
+    private String actionPayload;
     
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -63,25 +52,13 @@ public class DecisionInsightEntity {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
     
-    @Version
-    private Long version;
-    
     @PrePersist
     protected void onPersist() {
         if (this.tenantId == null) {
             this.tenantId = TenantContext.getTenantId();
         }
-    }
-    
-    public enum InsightType {
-        THRESHOLD, ANOMALY, TREND, CUSTOM
-    }
-    
-    public enum Severity {
-        INFO, WARNING, CRITICAL
-    }
-    
-    public enum InsightStatus {
-        OPEN, APPROVED, ARCHIVED
+        if (this.enabled == null) {
+            this.enabled = true;
+        }
     }
 }

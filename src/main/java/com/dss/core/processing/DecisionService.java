@@ -6,6 +6,7 @@ import com.dss.core.persistence.entity.DecisionInsightEntity;
 import com.dss.core.persistence.entity.NormalizedRecordEntity;
 import com.dss.core.persistence.repository.DecisionInsightRepository;
 import com.dss.core.persistence.repository.NormalizedRecordRepository;
+import com.dss.core.tenant.TenantContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,8 +44,10 @@ public class DecisionService {
     @Transactional
     public void processRecord(NormalizedRecord normalizedRecord) {
         try {
+            String tenantId = TenantContext.getTenantId();
+            
             // Step 1: Check if record already exists
-            if (recordRepository.findByRecordId(normalizedRecord.getRecordId()).isPresent()) {
+            if (recordRepository.findByRecordId(tenantId, normalizedRecord.getRecordId()).isPresent()) {
                 log.debug("Record already exists, skipping: {}", normalizedRecord.getRecordId());
                 return;
             }
@@ -97,13 +100,13 @@ public class DecisionService {
      * Retrieve insights for a specific record
      */
     public List<DecisionInsightEntity> getInsightsForRecord(Long recordId) {
-        return insightRepository.findByRecordId(recordId);
+        return insightRepository.findByRecordId(TenantContext.getTenantId(), recordId);
     }
     
     /**
      * Retrieve open insights
      */
     public List<DecisionInsightEntity> getOpenInsights() {
-        return insightRepository.findByStatus(DecisionInsightEntity.InsightStatus.OPEN);
+        return insightRepository.findByStatus(TenantContext.getTenantId(), DecisionInsightEntity.InsightStatus.OPEN);
     }
 }

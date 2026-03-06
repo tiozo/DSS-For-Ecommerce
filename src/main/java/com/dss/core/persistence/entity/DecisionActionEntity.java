@@ -7,22 +7,28 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "decision_insights", indexes = {
-    @Index(name = "idx_insight_tenant_id", columnList = "tenant_id"),
-    @Index(name = "idx_record_id", columnList = "record_id"),
-    @Index(name = "idx_status", columnList = "status"),
-    @Index(name = "idx_severity", columnList = "severity")
+@Table(name = "decision_actions", indexes = {
+    @Index(name = "idx_action_tenant_id", columnList = "tenant_id"),
+    @Index(name = "idx_action_record_id", columnList = "record_id"),
+    @Index(name = "idx_action_status", columnList = "status")
 })
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DecisionInsightEntity {
+public class DecisionActionEntity {
+    
+    public enum ActionType {
+        UP_PRICE, LOGISTICS_OVERLOAD, CUSTOM
+    }
+    
+    public enum ActionStatus {
+        PENDING, APPROVED, REJECTED, EXECUTED
+    }
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,54 +40,39 @@ public class DecisionInsightEntity {
     @Column(nullable = false)
     private Long recordId;
     
-    @Column(nullable = false)
-    private String ruleName;
-    
-    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private InsightType insightType;
-    
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Severity severity;
+    private ActionType actionType;
     
-    @Column(nullable = false, columnDefinition = "text")
-    private String message;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ActionStatus status;
     
     @Column(columnDefinition = "text")
-    private String metadata;
+    private String payload;
     
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private InsightStatus status;
+    @Column(columnDefinition = "text")
+    private String reason;
     
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
-    @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-    
-    @Version
-    private Long version;
     
     @PrePersist
     protected void onPersist() {
         if (this.tenantId == null) {
             this.tenantId = TenantContext.getTenantId();
         }
+        if (this.updatedAt == null) {
+            this.updatedAt = LocalDateTime.now();
+        }
     }
     
-    public enum InsightType {
-        THRESHOLD, ANOMALY, TREND, CUSTOM
-    }
-    
-    public enum Severity {
-        INFO, WARNING, CRITICAL
-    }
-    
-    public enum InsightStatus {
-        OPEN, APPROVED, ARCHIVED
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }

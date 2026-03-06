@@ -1,5 +1,6 @@
 package com.dss.core.persistence.entity;
 
+import com.dss.core.tenant.TenantContext;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,9 +13,13 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "normalized_records", indexes = {
+    @Index(name = "idx_tenant_id", columnList = "tenant_id"),
     @Index(name = "idx_source_id", columnList = "source_id"),
     @Index(name = "idx_record_id", columnList = "record_id"),
-    @Index(name = "idx_timestamp", columnList = "timestamp")
+    @Index(name = "idx_timestamp", columnList = "timestamp"),
+    @Index(name = "idx_tenant_record", columnList = "tenant_id,record_id")
+}, uniqueConstraints = {
+    @UniqueConstraint(name = "uk_tenant_record_id", columnNames = {"tenant_id", "record_id"})
 })
 @Data
 @Builder
@@ -27,9 +32,12 @@ public class NormalizedRecordEntity {
     private Long id;
     
     @Column(nullable = false)
+    private String tenantId;
+    
+    @Column(nullable = false)
     private String sourceId;
     
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String recordId;
     
     @Column(nullable = false)
@@ -54,4 +62,11 @@ public class NormalizedRecordEntity {
     
     @Version
     private Long version;
+    
+    @PrePersist
+    protected void onPersist() {
+        if (this.tenantId == null) {
+            this.tenantId = TenantContext.getTenantId();
+        }
+    }
 }
