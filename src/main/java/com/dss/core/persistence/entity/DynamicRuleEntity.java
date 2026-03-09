@@ -12,10 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "dynamic_rules", indexes = {
-    @Index(name = "idx_rule_tenant_id", columnList = "tenant_id"),
-    @Index(name = "idx_rule_name", columnList = "name")
-})
+@Table(name = "dynamic_rules")
 @Data
 @Builder
 @NoArgsConstructor

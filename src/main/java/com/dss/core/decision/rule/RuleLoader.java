@@ -12,7 +12,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
-@Component
+//@Component
 @Slf4j
 public class RuleLoader implements CommandLineRunner {
     

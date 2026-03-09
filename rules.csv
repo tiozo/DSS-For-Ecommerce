@@ -1,0 +1,4 @@
+ruleName,ruleType,condition,threshold,action
+High Value Sale,threshold,sales > threshold,5000,alert
+Large Order,threshold,quantityOrdered > threshold,40,notify
+Premium Deal,threshold,sales > threshold,10000,escalate

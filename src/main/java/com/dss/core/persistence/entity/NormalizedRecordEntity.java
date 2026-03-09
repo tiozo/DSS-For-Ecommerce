@@ -12,13 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "normalized_records", indexes = {
-    @Index(name = "idx_tenant_id", columnList = "tenant_id"),
-    @Index(name = "idx_source_id", columnList = "source_id"),
-    @Index(name = "idx_record_id", columnList = "record_id"),
-    @Index(name = "idx_timestamp", columnList = "timestamp"),
-    @Index(name = "idx_tenant_record", columnList = "tenant_id,record_id")
-}, uniqueConstraints = {
+@Table(name = "normalized_records", uniqueConstraints = {
     @UniqueConstraint(name = "uk_tenant_record_id", columnNames = {"tenant_id", "record_id"})
 })
 @Data

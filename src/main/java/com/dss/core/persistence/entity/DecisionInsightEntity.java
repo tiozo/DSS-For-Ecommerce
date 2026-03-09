@@ -12,12 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "decision_insights", indexes = {
-    @Index(name = "idx_insight_tenant_id", columnList = "tenant_id"),
-    @Index(name = "idx_record_id", columnList = "record_id"),
-    @Index(name = "idx_status", columnList = "status"),
-    @Index(name = "idx_severity", columnList = "severity")
-})
+@Table(name = "decision_insights")
 @Data
 @Builder
 @NoArgsConstructor

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSS Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #1a1a1a; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+        header { border-bottom: 1px solid #e0e0e0; padding-bottom: 24px; margin-bottom: 32px; }
+        h1 { font-size: 28px; font-weight: 600; }
+        
+        .tabs { display: flex; gap: 0; border-bottom: 1px solid #d0d0d0; margin-bottom: 32px; }
+        .tab { padding: 12px 24px; border: 1px solid #d0d0d0; border-bottom: none; background: white; cursor: pointer; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .tab.active { background: #1a1a1a; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 32px; }
+        .card { background: white; border: 1px solid #d0d0d0; padding: 20px; }
+        .card-title { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-bottom: 12px; }
+        .card-value { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        
+        .upload-section { background: white; border: 1px solid #d0d0d0; padding: 24px; margin-bottom: 24px; }
+        .upload-row { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; }
+        .upload-label { font-weight: 600; font-size: 13px; text-transform: uppercase; min-width: 120px; }
+        
+        button { padding: 10px 20px; font-size: 13px; font-weight: 600; border: 1px solid #d0d0d0; background: white; cursor: pointer; text-transform: uppercase; letter-spacing: 0.3px; }
+        button:hover { background: #f5f5f5; }
+        button.primary { background: #1a1a1a; color: white; border-color: #1a1a1a; }
+        button.primary:hover { background: #333; }
+        
+        .chart-container { background: white; border: 1px solid #d0d0d0; padding: 24px; margin-bottom: 24px; }
+        .chart-title { font-size: 14px; font-weight: 600; text-transform: uppercase; margin-bottom: 16px; color: #666; }
+        canvas { max-height: 300px; }
+        
+        .badge { display: inline-block; padding: 6px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; background: #2d6a47; color: white; border: 1px solid #2d6a47; }
+        .status { padding: 4px 8px; font-size: 11px; font-weight: 600; border: 1px solid; }
+        .status-success { background: #f0f8f0; border-color: #4a9d6f; color: #2d6a47; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>DSS Admin Dashboard</h1>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
+            <div class="tab" onclick="switchTab('data')">Data Management</div>
+        </div>
+        
+        <div id="dashboard" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <div class="card-title">Total Records</div>
+                    <div class="card-value" id="totalRecords">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Insights</div>
+                    <div class="card-value" id="insightCount">0</div>
+                    <span id="insightBadge" class="badge" style="display:none;">Active</span>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Total Sales Over Time (Monthly)</div>
+                <canvas id="salesTimeChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Total Sales by Product Line</div>
+                <canvas id="salesProductChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Status Distribution</div>
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+        
+        <div id="data" class="tab-content">
+            <div class="upload-section">
+                <div class="upload-row">
+                    <div class="upload-label">Sales Data</div>
+                    <input type="file" id="salesFile" accept=".csv">
+                    <button class="primary" onclick="uploadSales()">Upload Sales CSV</button>
+                    <span id="salesStatus"></span>
+                </div>
+                <div class="upload-row">
+                    <div class="upload-label">Rules</div>
+                    <input type="file" id="rulesFile" accept=".csv">
+                    <button class="primary" onclick="uploadRules()">Upload Rules CSV</button>
+                    <span id="rulesStatus"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let charts = {};
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab).classList.add('active');
+        }
+        
+        async function uploadSales() {
+            const file = document.getElementById('salesFile').files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const res = await fetch('/api/admin/upload-sales', { method: 'POST', body: formData });
+                const data = await res.json();
+                document.getElementById('salesStatus').innerHTML = `<span class="status status-success">${data.recordsProcessed} records, ${data.insightsGenerated} insights</span>`;
+                loadDashboard();
+            } catch (e) {
+                document.getElementById('salesStatus').textContent = 'Error: ' + e.message;
+            }
+        }
+        
+        async function uploadRules() {
+            const file = document.getElementById('rulesFile').files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const res = await fetch('/api/admin/upload-rules', { method: 'POST', body: formData });
+                const data = await res.json();
+                document.getElementById('rulesStatus').innerHTML = `<span class="status status-success">${data.rulesProcessed} rules loaded</span>`;
+            } catch (e) {
+                document.getElementById('rulesStatus').textContent = 'Error: ' + e.message;
+            }
+        }
+        
+        async function loadDashboard() {
+            try {
+                const res = await fetch('/api/admin/dashboard-stats');
+                const data = await res.json();
+                
+                document.getElementById('totalRecords').textContent = data.totalRecords;
+                document.getElementById('insightCount').textContent = data.insightCount;
+                document.getElementById('insightBadge').style.display = data.hasInsights ? 'inline-block' : 'none';
+                
+                renderCharts(data);
+            } catch (e) {
+                console.error('Failed to load dashboard:', e);
+            }
+        }
+        
+        function renderCharts(data) {
+            if (charts.time) charts.time.destroy();
+            if (charts.product) charts.product.destroy();
+            if (charts.status) charts.status.destroy();
+            
+            const timeLabels = data.salesByMonth.map(d => d.label);
+            const timeValues = data.salesByMonth.map(d => d.value);
+            
+            charts.time = new Chart(document.getElementById('salesTimeChart'), {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: 'Sales',
+                        data: timeValues,
+                        borderColor: '#1a1a1a',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
+            });
+            
+            const productLabels = data.salesByProductLine.map(d => d.label);
+            const productValues = data.salesByProductLine.map(d => d.value);
+            
+            charts.product = new Chart(document.getElementById('salesProductChart'), {
+                type: 'bar',
+                data: {
+                    labels: productLabels,
+                    datasets: [{
+                        label: 'Sales',
+                        data: productValues,
+                        backgroundColor: '#1a1a1a',
+                        borderColor: '#1a1a1a',
+                        borderWidth: 1
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
+            });
+            
+            const statusLabels = data.statusDistribution.map(d => d.label);
+            const statusValues = data.statusDistribution.map(d => d.value);
+            
+            charts.status = new Chart(document.getElementById('statusChart'), {
+                type: 'pie',
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        data: statusValues,
+                        backgroundColor: ['#1a1a1a', '#666', '#999', '#ccc'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true }
+            });
+        }
+        
+        loadDashboard();
+    </script>
+</body>
+</html>
