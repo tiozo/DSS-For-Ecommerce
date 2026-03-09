@@ -196,7 +196,7 @@ Response:
 
 **Get Open Insights**
 ```http
-GET /api/insights
+GET /api/insights/open
 ```
 
 **Approve Insight**

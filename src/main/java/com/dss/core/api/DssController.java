@@ -89,7 +89,7 @@ public class DssController {
         return processingService.getProcessedData();
     }
     
-    @GetMapping("/insights")
+    @GetMapping("/insights/open")
     public List<InsightDTO> getOpenInsights() {
         return decisionService.getOpenInsights().stream()
             .map(InsightDTO::fromEntity)

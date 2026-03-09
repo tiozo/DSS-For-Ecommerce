@@ -40,7 +40,13 @@ public class AdminController {
     public ResponseEntity<Map<String, Object>> uploadRules(@RequestParam("file") MultipartFile file) {
         try {
             int count = ruleCsvProcessor.processCsv(file);
-            return ResponseEntity.ok(Map.of("success", true, "rulesProcessed", count));
+            // Trigger rule evaluation after uploading rules
+            List<DecisionInsightEntity> insights = salesRuleEngine.processRules();
+            return ResponseEntity.ok(Map.of(
+                "success", true, 
+                "rulesProcessed", count,
+                "insightsGenerated", insights.size()
+            ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
         }
@@ -53,14 +59,16 @@ public class AdminController {
         var statusDist = salesRepository.getStatusDistribution();
         var insights = insightRepository.findAll();
         
-        return ResponseEntity.ok(Map.of(
-            "salesByMonth", convertToMap(salesByMonth),
-            "salesByProductLine", convertToMap(salesByProduct),
-            "statusDistribution", convertToMap(statusDist),
-            "totalRecords", salesRepository.count(),
-            "insightCount", insights.size(),
-            "hasInsights", !insights.isEmpty()
-        ));
+        Map<String, Object> response = new HashMap<>();
+        response.put("salesByMonth", convertToMap(salesByMonth));
+        response.put("salesByProductLine", convertToMap(salesByProduct));
+        response.put("statusDistribution", convertToMap(statusDist));
+        response.put("totalRecords", salesRepository.count());
+        response.put("insightCount", insights.size());
+        response.put("hasInsights", !insights.isEmpty());
+        response.put("insights", insights);
+        
+        return ResponseEntity.ok(response);
     }
     
     private List<Map<String, Object>> convertToMap(List<Object[]> data) {
