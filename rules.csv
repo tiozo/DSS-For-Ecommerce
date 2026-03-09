@@ -1,4 +1,7 @@
-ruleName,ruleType,condition,threshold,action
-High Value Sale,threshold,sales > threshold,5000,alert
-Large Order,threshold,quantityOrdered > threshold,40,notify
-Premium Deal,threshold,sales > threshold,10000,escalate
+ruleName,ruleType,condition,threshold,action,severity
+Big Win Order,threshold,sales > threshold,10000,CELEBRATE,SUCCESS
+Bulk Order Logistics,threshold,quantityOrdered > threshold,50,NOTIFY_LOGISTICS,INFO
+Low Margin Alert,condition,priceEach < (msrp * 0.8),0,REVIEW_PRICING,WARNING
+Critical Status,condition,status == 'On Hold' || status == 'Disputed',0,IMMEDIATE_ACTION,CRITICAL
+Potential Loss,condition,sales < 0,0,FLAG_ERROR,CRITICAL
+Holiday Rush,condition,month_id == 11 || month_id == 12,0,PRIORITY_HANDLING,INFO

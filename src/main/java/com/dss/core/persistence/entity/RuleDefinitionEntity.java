@@ -18,6 +18,9 @@ public class RuleDefinitionEntity {
     @Column(nullable = false)
     private String ruleName;
     
+    @Column(name = "severity")
+    private String severity;
+
     @Column(nullable = false)
     private String ruleType;
     

@@ -4,265 +4,315 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DSS Admin Core</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root { --primary: #1a1a1a; --border: #e0e0e0; --bg: #f5f5f5; --success: #2d6a4f; --warning: #d97706; --error: #dc2626; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #1a1a1a; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
-        header { border-bottom: 1px solid #e0e0e0; padding-bottom: 16px; margin-bottom: 32px; }
-        h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.3px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--primary); padding: 24px; }
         
-        .section { background: white; border: 1px solid #d0d0d0; padding: 20px; margin-bottom: 24px; }
-        .section-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-bottom: 16px; }
-        
-        .upload-grid { display: grid; grid-template-columns: 120px 1fr auto auto; gap: 12px; align-items: center; margin-bottom: 12px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+        h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; }
+
+        /* KPI Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .card { background: white; padding: 20px; border: 1px solid var(--border); }
+        .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; font-weight: 600; margin-bottom: 8px; }
+        .card-value { font-size: 28px; font-weight: 700; }
+
+        /* Upload Section */
+        .section { background: white; border: 1px solid var(--border); padding: 20px; margin-bottom: 24px; }
+        .section-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #666; margin-bottom: 16px; letter-spacing: 0.5px; }
+        .upload-row { display: grid; grid-template-columns: 100px 1fr auto; gap: 12px; align-items: center; margin-bottom: 12px; }
         .upload-label { font-size: 12px; font-weight: 600; text-transform: uppercase; }
         input[type="file"] { font-size: 12px; }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .stat-card { background: white; border: 1px solid #d0d0d0; padding: 16px; }
-        .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #666; margin-bottom: 8px; }
-        .stat-value { font-size: 28px; font-weight: 700; }
-        .badge { display: inline-block; padding: 4px 8px; font-size: 10px; font-weight: 600; text-transform: uppercase; background: #2d6a47; color: white; margin-top: 8px; }
-        
-        button { padding: 8px 16px; font-size: 11px; font-weight: 600; border: 1px solid #1a1a1a; background: #1a1a1a; color: white; cursor: pointer; text-transform: uppercase; letter-spacing: 0.3px; }
+        button { background: var(--primary); color: white; border: none; padding: 8px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; cursor: pointer; }
         button:hover { background: #333; }
-        .status { padding: 4px 8px; font-size: 11px; font-weight: 600; border: 1px solid #4a9d6f; background: #f0f8f0; color: #2d6a47; }
+        .status { font-size: 11px; font-weight: 600; margin-left: 10px; }
+        .status.success { color: var(--success); }
+        .status.error { color: var(--error); }
+
+        /* Insights Table */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; padding: 12px; background: #fafafa; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; color: #666; font-weight: 600; }
+        td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
         
-        .insights-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .insights-table th { background: #f5f5f5; border: 1px solid #d0d0d0; padding: 10px; text-align: left; font-weight: 600; text-transform: uppercase; font-size: 10px; color: #666; }
-        .insights-table td { border: 1px solid #e0e0e0; padding: 10px; }
-        .insights-table tr:hover { background: #fafafa; }
-        .severity { padding: 2px 6px; font-size: 9px; font-weight: 600; text-transform: uppercase; border: 1px solid; }
-        .severity-WARNING { background: #fffbeb; border-color: #f59e0b; color: #92400e; }
-        .severity-CRITICAL { background: #fef2f2; border-color: #ef4444; color: #7f1d1d; }
-        .severity-INFO { background: #f0f4ff; border-color: #3b82f6; color: #1e40af; }
+        .badge { display: inline-block; padding: 4px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; border-radius: 4px; }
+        .severity-WARNING { background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; }
+        .severity-CRITICAL { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+        .severity-INFO { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .severity-SUCCESS { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+        /* Analytics - FIXED CSS HERE */
+        details { background: white; border: 1px solid var(--border); margin-top: 24px; }
+        summary { padding: 16px; font-size: 12px; font-weight: 600; text-transform: uppercase; cursor: pointer; list-style: none; display: flex; align-items: center; }
+        summary::-webkit-details-marker { display: none; }
+        summary::before { content: "+"; margin-right: 8px; font-size: 14px; }
+        details[open] summary::before { content: "-"; }
+        details[open] summary { border-bottom: 1px solid var(--border); }
         
-        details { margin-top: 24px; }
-        summary { font-size: 12px; font-weight: 600; text-transform: uppercase; cursor: pointer; padding: 12px; background: white; border: 1px solid #d0d0d0; }
-        summary:hover { background: #f5f5f5; }
-        .charts-container { padding: 20px; background: white; border: 1px solid #d0d0d0; border-top: none; }
-        .chart-box { margin-bottom: 24px; }
-        .chart-title { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #666; margin-bottom: 12px; }
-        canvas { max-height: 250px; }
+        .charts-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
+            gap: 24px; 
+            padding: 24px; 
+        }
+        
+        /* QUAN TRỌNG: Khóa chiều cao và position relative */
+        .chart-box { 
+            position: relative;
+            height: 300px; 
+            width: 100%;
+        }
+        .chart-title { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #666; margin-bottom: 12px; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>DSS Admin Core</h1>
-        </header>
-        
-        <!-- Section 1: Data Management -->
-        <div class="section">
-            <div class="section-title">Data Management</div>
-            <div class="upload-grid">
-                <div class="upload-label">Sales Data</div>
-                <input type="file" id="salesFile" accept=".csv">
-                <button onclick="uploadSales()">Upload</button>
-                <span id="salesStatus"></span>
-            </div>
-            <div class="upload-grid">
-                <div class="upload-label">Rules</div>
-                <input type="file" id="rulesFile" accept=".csv">
-                <button onclick="uploadRules()">Upload</button>
-                <span id="rulesStatus"></span>
+
+<div class="container">
+    <header>
+        <h1>DSS Admin Core</h1>
+    </header>
+
+    <div class="section">
+        <div class="section-title">Data Ingestion</div>
+        <div class="upload-row">
+            <div class="upload-label">Sales Data</div>
+            <input type="file" id="salesFile" accept=".csv">
+            <div>
+                <button onclick="handleUpload('sales')">Upload</button>
+                <span id="salesStatus" class="status"></span>
             </div>
         </div>
-        
-        <!-- Section 2: Quick Stats -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total Sales</div>
-                <div class="stat-value" id="totalRecords">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Active Rules</div>
-                <div class="stat-value" id="activeRules">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Insights</div>
-                <div class="stat-value" id="insightCount">0</div>
-                <span id="insightBadge" class="badge" style="display:none;">Active</span>
+        <div class="upload-row">
+            <div class="upload-label">Rules Config</div>
+            <input type="file" id="rulesFile" accept=".csv">
+            <div>
+                <button onclick="handleUpload('rules')">Upload</button>
+                <span id="rulesStatus" class="status"></span>
             </div>
         </div>
-        
-        <!-- Section 3: Insights List -->
-        <div id="insightsSection" class="section" style="display:none;">
-            <div class="section-title">Triggered Insights</div>
-            <table class="insights-table">
+    </div>
+
+    <div class="stats-grid">
+        <div class="card">
+            <div class="card-label">Total Records Processed</div>
+            <div class="card-value" id="totalRecords">-</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Active Insights</div>
+            <div class="card-value" id="insightCount">-</div>
+        </div>
+    </div>
+
+    <div class="section" id="insightsSection" style="display: none;">
+        <div class="section-title">Triggered Insights</div>
+        <div class="table-container">
+            <table id="insightsTable">
                 <thead>
                     <tr>
-                        <th>Rule</th>
-                        <th>Type</th>
-                        <th>Severity</th>
+                        <th style="width: 20%">Rule Name</th>
+                        <th style="width: 15%">Type</th>
+                        <th style="width: 10%">Severity</th>
                         <th>Message</th>
-                        <th>Created</th>
+                        <th style="width: 15%">Date</th>
                     </tr>
                 </thead>
-                <tbody id="insightsBody">
-                </tbody>
+                <tbody id="insightsBody"></tbody>
             </table>
         </div>
-        
-        <!-- Section 4: Analytics (Collapsible) -->
-        <details>
-            <summary>+ View Advanced Analytics</summary>
-            <div class="charts-container">
-                <div class="chart-box">
-                    <div class="chart-title">Sales Over Time (Monthly)</div>
-                    <canvas id="salesTimeChart"></canvas>
-                </div>
-                <div class="chart-box">
-                    <div class="chart-title">Sales by Product Line</div>
-                    <canvas id="salesProductChart"></canvas>
-                </div>
-                <div class="chart-box">
-                    <div class="chart-title">Order Status Distribution</div>
-                    <canvas id="statusChart"></canvas>
-                </div>
-            </div>
-        </details>
     </div>
-    
-    <script>
-        let charts = {};
-        let chartsRendered = false;
-        
-        async function uploadSales() {
-            const file = document.getElementById('salesFile').files[0];
-            if (!file) return;
+
+    <details id="analyticsDetails">
+        <summary>View Advanced Analytics</summary>
+        <div class="charts-grid">
+            <div class="chart-box">
+                <div class="chart-title">Monthly Sales Trend</div>
+                <canvas id="salesTimeChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <div class="chart-title">Revenue by Product Line</div>
+                <canvas id="salesProductChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <div class="chart-title">Order Status Distribution</div>
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </details>
+</div>
+
+<script>
+    let dashboardData = null;
+    let charts = {}; 
+
+    // --- MAIN FETCH ---
+    async function loadDashboard() {
+        try {
+            const res = await fetch('/api/admin/dashboard-stats', {
+                headers: { 'X-Tenant-ID': 'default' }
+            });
+            if (!res.ok) throw new Error('Network response was not ok');
             
-            const formData = new FormData();
-            formData.append('file', file);
+            const data = await res.json();
+            dashboardData = data;
             
-            try {
-                const res = await fetch('/api/admin/upload-sales', { method: 'POST', body: formData });
-                const data = await res.json();
-                document.getElementById('salesStatus').innerHTML = `<span class="status">${data.recordsProcessed} records, ${data.insightsGenerated} insights</span>`;
-                loadDashboard();
-            } catch (e) {
-                document.getElementById('salesStatus').textContent = 'Error';
-            }
+            renderKPIs(data);
+            renderInsights(data.insights || []);
+
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
         }
+    }
+
+    // --- RENDER FUNCTIONS ---
+    function renderKPIs(data) {
+        document.getElementById('totalRecords').textContent = (data.totalRecords || 0).toLocaleString();
+        document.getElementById('insightCount').textContent = (data.insightCount || 0).toLocaleString();
+    }
+
+    function renderInsights(insights) {
+        const section = document.getElementById('insightsSection');
+        const tbody = document.getElementById('insightsBody');
         
-        async function uploadRules() {
-            const file = document.getElementById('rulesFile').files[0];
-            if (!file) return;
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            try {
-                const res = await fetch('/api/admin/upload-rules', { method: 'POST', body: formData });
-                const data = await res.json();
-                document.getElementById('rulesStatus').innerHTML = `<span class="status">${data.rulesProcessed} rules, ${data.insightsGenerated} insights</span>`;
-                loadDashboard();
-            } catch (e) {
-                document.getElementById('rulesStatus').textContent = 'Error';
-            }
+        if (insights.length > 0) {
+            section.style.display = 'block';
+            tbody.innerHTML = insights.map(i => {
+                const severity = i.severity || 'INFO';
+                return `
+                    <tr>
+                        <td style="font-weight: 500">${i.ruleName || '-'}</td>
+                        <td style="color: #666; font-size: 12px">${i.insightType || '-'}</td>
+                        <td><span class="badge severity-${severity}">${severity}</span></td>
+                        <td>${i.message || ''}</td>
+                        <td style="color: #666; font-size: 12px">${i.createdAt ? new Date(i.createdAt).toLocaleDateString() : '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            section.style.display = 'none';
         }
-        
-        async function loadDashboard() {
-            try {
-                const res = await fetch('/api/admin/dashboard-stats');
-                const data = await res.json();
-                
-                document.getElementById('totalRecords').textContent = data.totalRecords;
-                document.getElementById('activeRules').textContent = data.insights ? data.insights.length : 0;
-                document.getElementById('insightCount').textContent = data.insightCount;
-                
-                if (data.hasInsights) {
-                    document.getElementById('insightBadge').style.display = 'inline-block';
-                    document.getElementById('insightsSection').style.display = 'block';
-                    renderInsights(data.insights);
-                }
-                
-                // Store data for lazy chart rendering
-                window.chartData = data;
-            } catch (e) {
-                console.error('Failed to load dashboard:', e);
-            }
-        }
-        
-        function renderInsights(insights) {
-            const tbody = document.getElementById('insightsBody');
-            tbody.innerHTML = insights.map(i => `
-                <tr>
-                    <td>${i.ruleName}</td>
-                    <td>${i.insightType}</td>
-                    <td><span class="severity severity-${i.severity}">${i.severity}</span></td>
-                    <td>${i.message}</td>
-                    <td>${new Date(i.createdAt).toLocaleString()}</td>
-                </tr>
-            `).join('');
-        }
-        
-        // Lazy load charts when details is opened
-        document.querySelector('details').addEventListener('toggle', function(e) {
-            if (e.target.open && !chartsRendered && window.chartData) {
-                renderCharts(window.chartData);
-                chartsRendered = true;
-            }
-        });
-        
-        function renderCharts(data) {
-            const timeLabels = data.salesByMonth.map(d => d.label);
-            const timeValues = data.salesByMonth.map(d => d.value);
-            
-            charts.time = new Chart(document.getElementById('salesTimeChart'), {
+    }
+
+    // --- CHART RENDERER (FIXED) ---
+    function renderCharts() {
+        if (!dashboardData) return;
+
+        // Cấu hình chung cho Chart
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false, // QUAN TRỌNG: Tắt cái này đi để không bị chảy xệ
+            plugins: { legend: { display: false } },
+            layout: { padding: 10 }
+        };
+
+        const chartConfig = [
+            {
+                id: 'salesTimeChart',
                 type: 'line',
-                data: {
-                    labels: timeLabels,
-                    datasets: [{
-                        label: 'Sales',
-                        data: timeValues,
-                        borderColor: '#1a1a1a',
-                        backgroundColor: 'transparent',
-                        borderWidth: 2,
-                        tension: 0
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
-            });
-            
-            const productLabels = data.salesByProductLine.map(d => d.label);
-            const productValues = data.salesByProductLine.map(d => d.value);
-            
-            charts.product = new Chart(document.getElementById('salesProductChart'), {
+                labels: dashboardData.salesByMonth?.map(d => d.label),
+                data: dashboardData.salesByMonth?.map(d => d.value),
+                bg: 'rgba(0,0,0,0.05)',
+                border: '#1a1a1a',
+                fill: true,
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            },
+            {
+                id: 'salesProductChart',
                 type: 'bar',
+                labels: dashboardData.salesByProductLine?.map(d => d.label),
+                data: dashboardData.salesByProductLine?.map(d => d.value),
+                bg: '#1a1a1a',
+                border: '#1a1a1a',
+                fill: false,
+                options: commonOptions
+            },
+            {
+                id: 'statusChart',
+                type: 'doughnut',
+                labels: dashboardData.statusDistribution?.map(d => d.label),
+                data: dashboardData.statusDistribution?.map(d => d.value),
+                bg: ['#264653', '#2a9d8f', '#e9c46a', '#f4a261', '#e76f51', '#ccc'],
+                border: '#fff',
+                fill: false,
+                options: commonOptions
+            }
+        ];
+
+        chartConfig.forEach(cfg => {
+            if (!cfg.labels || !cfg.data) return;
+
+            const ctx = document.getElementById(cfg.id);
+            if (charts[cfg.id]) charts[cfg.id].destroy();
+
+            charts[cfg.id] = new Chart(ctx, {
+                type: cfg.type,
                 data: {
-                    labels: productLabels,
+                    labels: cfg.labels,
                     datasets: [{
-                        label: 'Sales',
-                        data: productValues,
-                        backgroundColor: '#1a1a1a',
-                        borderColor: '#1a1a1a',
-                        borderWidth: 1
+                        data: cfg.data,
+                        backgroundColor: cfg.bg,
+                        borderColor: cfg.border,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: cfg.fill
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
+                options: cfg.options // Sử dụng options đã tắt maintainAspectRatio
             });
-            
-            const statusLabels = data.statusDistribution.map(d => d.label);
-            const statusValues = data.statusDistribution.map(d => d.value);
-            
-            charts.status = new Chart(document.getElementById('statusChart'), {
-                type: 'pie',
-                data: {
-                    labels: statusLabels,
-                    datasets: [{
-                        data: statusValues,
-                        backgroundColor: ['#1a1a1a', '#666', '#999', '#ccc'],
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: true }
-            });
-        }
+        });
+    }
+
+    // --- HANDLERS ---
+    window.handleUpload = async (type) => {
+        const fileInput = document.getElementById(type === 'sales' ? 'salesFile' : 'rulesFile');
+        const statusSpan = document.getElementById(type === 'sales' ? 'salesStatus' : 'rulesStatus');
         
-        loadDashboard();
-    </script>
+        if (!fileInput.files[0]) return alert("Please select a file");
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        statusSpan.textContent = "Uploading...";
+        statusSpan.className = "status";
+
+        try {
+            const endpoint = type === 'sales' ? '/api/admin/upload-sales' : '/api/admin/upload-rules';
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Tenant-ID': 'default' }
+            });
+
+            if (!res.ok) throw new Error();
+            
+            statusSpan.textContent = "Done";
+            statusSpan.classList.add('success');
+            loadDashboard();
+
+        } catch (e) {
+            statusSpan.textContent = "Error";
+            statusSpan.classList.add('error');
+        }
+    };
+
+    // Lazy load charts (chỉ vẽ khi mở ra)
+    document.getElementById('analyticsDetails').addEventListener('toggle', function(e) {
+        if (this.open) {
+            setTimeout(renderCharts, 100);
+        }
+    });
+
+    // Init
+    document.addEventListener('DOMContentLoaded', loadDashboard);
+</script>
+
 </body>
 </html>

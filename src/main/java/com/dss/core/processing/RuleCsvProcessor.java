@@ -25,6 +25,7 @@ public class RuleCsvProcessor {
                 rules.add(RuleDefinitionEntity.builder()
                     .ruleName(row.get("ruleName"))
                     .ruleType(row.get("ruleType"))
+                    .severity(row.get("severity"))
                     .condition(row.get("condition"))
                     .threshold(row.get("threshold"))
                     .action(row.get("action"))
