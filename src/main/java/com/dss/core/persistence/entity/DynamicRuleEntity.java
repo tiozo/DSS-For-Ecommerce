@@ -18,37 +18,41 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DynamicRuleEntity {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false)
     private String tenantId;
-    
+
     @Column(nullable = false)
     private String name;
-    
+
     @Column(columnDefinition = "text", nullable = false)
     private String expression;
-    
+
     @Column(columnDefinition = "text")
     private String description;
-    
+
     @Column(nullable = false)
     private Boolean enabled;
-    
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private DecisionInsightEntity.Severity severity;
+
     @Column(columnDefinition = "text")
     private String actionPayload;
-    
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-    
+
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-    
+
     @PrePersist
     protected void onPersist() {
         if (this.tenantId == null) {
@@ -56,6 +60,9 @@ public class DynamicRuleEntity {
         }
         if (this.enabled == null) {
             this.enabled = true;
+        }
+        if (this.severity == null) {
+            this.severity = DecisionInsightEntity.Severity.INFO;
         }
     }
 }

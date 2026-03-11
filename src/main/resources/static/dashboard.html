@@ -1,318 +1,846 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DSS Admin Core</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #1a1a1a; --border: #e0e0e0; --bg: #f5f5f5; --success: #2d6a4f; --warning: #d97706; --error: #dc2626; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--primary); padding: 24px; }
-        
-        .container { max-width: 1200px; margin: 0 auto; }
-        header { margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
-        h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; }
+        :root {
+            --primary: #1a1a1a;
+            --border: #e0e0e0;
+            --bg: #f5f5f5;
+            --success: #2d6a4f;
+            --warning: #d97706;
+            --error: #dc2626;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--primary);
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 32px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
 
         /* KPI Cards */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
-        .card { background: white; padding: 20px; border: 1px solid var(--border); }
-        .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; font-weight: 600; margin-bottom: 8px; }
-        .card-value { font-size: 28px; font-weight: 700; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .card-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
 
         /* Upload Section */
-        .section { background: white; border: 1px solid var(--border); padding: 20px; margin-bottom: 24px; }
-        .section-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #666; margin-bottom: 16px; letter-spacing: 0.5px; }
-        .upload-row { display: grid; grid-template-columns: 100px 1fr auto; gap: 12px; align-items: center; margin-bottom: 12px; }
-        .upload-label { font-size: 12px; font-weight: 600; text-transform: uppercase; }
-        input[type="file"] { font-size: 12px; }
-        button { background: var(--primary); color: white; border: none; padding: 8px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; cursor: pointer; }
-        button:hover { background: #333; }
-        .status { font-size: 11px; font-weight: 600; margin-left: 10px; }
-        .status.success { color: var(--success); }
-        .status.error { color: var(--error); }
+        .section {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        .upload-row {
+            display: grid;
+            grid-template-columns: 100px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .upload-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        input[type="file"] {
+            font-size: 12px;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #333;
+        }
+
+        button:disabled {
+            background: #bbb;
+            cursor: not-allowed;
+        }
+
+        input[type="file"]:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .upload-hint {
+            grid-column: 2 / -1;
+            font-size: 11px;
+            color: #999;
+            margin-top: -6px;
+            margin-bottom: 6px;
+        }
+
+        .status {
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status.success {
+            color: var(--success);
+        }
+
+        .status.error {
+            color: var(--error);
+        }
 
         /* Insights Table */
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { text-align: left; padding: 12px; background: #fafafa; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; color: #666; font-weight: 600; }
-        td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
-        tr:last-child td { border-bottom: none; }
-        
-        .badge { display: inline-block; padding: 4px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; border-radius: 4px; }
-        .severity-WARNING { background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; }
-        .severity-CRITICAL { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
-        .severity-INFO { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
-        .severity-SUCCESS { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .insight-container {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 0;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            background: #fafafa;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #666;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: #fafafa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-radius: 0;
+            border: 1px solid;
+        }
+
+        .severity-CRITICAL {
+            background: #fef2f2;
+            color: #991b1b;
+            border-color: #fca5a5;
+        }
+
+        .severity-WARNING {
+            background: #fffbeb;
+            color: #92400e;
+            border-color: #fcd34d;
+        }
+
+        .severity-INFO {
+            background: #eff6ff;
+            color: #1e40af;
+            border-color: #bfdbfe;
+        }
+
+        .severity-SUCCESS {
+            background: #f0fdf4;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        .btn-review {
+            background: none;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            padding: 5px 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+        }
+
+        .btn-review:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: white;
+            border: 1px solid var(--primary);
+            width: 760px;
+            max-width: 95vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--primary);
+            background: none;
+        }
+
+        .modal-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .modal-context {
+            background: #f5f5f5;
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .modal-action {
+            background: white;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .ctx-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #999;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .ctx-value {
+            font-size: 13px;
+            color: var(--primary);
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .action-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #999;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        #resolutionNote {
+            width: 100%;
+            height: 110px;
+            border: 1px solid var(--border);
+            padding: 10px;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+        }
+
+        #resolutionNote:focus {
+            border-color: var(--primary);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: auto;
+        }
+
+        .btn-approve {
+            background: #2d6a4f;
+            color: white;
+            border: none;
+            padding: 9px 18px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-approve:hover {
+            background: #1b4332;
+        }
+
+        .btn-override {
+            background: #d97706;
+            color: white;
+            border: none;
+            padding: 9px 18px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-override:hover {
+            background: #b45309;
+        }
+
+        .btn-archive {
+            background: none;
+            color: #666;
+            border: 1px solid #ccc;
+            padding: 9px 18px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-archive:hover {
+            background: #f5f5f5;
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
 
         /* Analytics - FIXED CSS HERE */
-        details { background: white; border: 1px solid var(--border); margin-top: 24px; }
-        summary { padding: 16px; font-size: 12px; font-weight: 600; text-transform: uppercase; cursor: pointer; list-style: none; display: flex; align-items: center; }
-        summary::-webkit-details-marker { display: none; }
-        summary::before { content: "+"; margin-right: 8px; font-size: 14px; }
-        details[open] summary::before { content: "-"; }
-        details[open] summary { border-bottom: 1px solid var(--border); }
-        
-        .charts-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
-            gap: 24px; 
-            padding: 24px; 
+        details {
+            background: white;
+            border: 1px solid var(--border);
+            margin-top: 24px;
         }
-        
+
+        summary {
+            padding: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        summary::before {
+            content: "+";
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        details[open] summary::before {
+            content: "-";
+        }
+
+        details[open] summary {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+            padding: 24px;
+        }
+
         /* QUAN TRỌNG: Khóa chiều cao và position relative */
-        .chart-box { 
+        .chart-box {
             position: relative;
-            height: 300px; 
+            height: 300px;
             width: 100%;
         }
-        .chart-title { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #666; margin-bottom: 12px; text-align: center; }
+
+        .chart-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 12px;
+            text-align: center;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <header>
-        <h1>DSS Admin Core</h1>
-    </header>
+    <div class="container">
+        <header>
+            <h1>DSS Admin Core</h1>
+        </header>
 
-    <div class="section">
-        <div class="section-title">Data Ingestion</div>
-        <div class="upload-row">
-            <div class="upload-label">Sales Data</div>
-            <input type="file" id="salesFile" accept=".csv">
-            <div>
-                <button onclick="handleUpload('sales')">Upload</button>
-                <span id="salesStatus" class="status"></span>
+        <div class="section">
+            <div class="section-title">Data Ingestion</div>
+            <!-- STEP 1: Rules Config (always active) -->
+            <div class="upload-row">
+                <div class="upload-label">Rules Config</div>
+                <input type="file" id="rulesFile" accept=".csv">
+                <div>
+                    <button onclick="handleUpload('rules')">Upload</button>
+                    <span id="rulesStatus" class="status"></span>
+                </div>
+            </div>
+            <!-- STEP 2: Sales Data (locked until rules are uploaded) -->
+            <div class="upload-row">
+                <div class="upload-label">Sales Data</div>
+                <input type="file" id="salesFile" accept=".csv" disabled>
+                <div>
+                    <button id="salesUploadBtn" onclick="handleUpload('sales')" disabled>Upload</button>
+                    <span id="salesStatus" class="status"></span>
+                </div>
+            </div>
+            <div class="upload-hint" id="salesHint">⚠️ Please upload Rules Config first to enable Sales Data processing.
             </div>
         </div>
-        <div class="upload-row">
-            <div class="upload-label">Rules Config</div>
-            <input type="file" id="rulesFile" accept=".csv">
-            <div>
-                <button onclick="handleUpload('rules')">Upload</button>
-                <span id="rulesStatus" class="status"></span>
+
+        <div class="stats-grid">
+            <div class="card">
+                <div class="card-label">Total Records Processed</div>
+                <div class="card-value" id="totalRecords">-</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Active Insights</div>
+                <div class="card-value" id="insightCount">-</div>
             </div>
         </div>
+
+        <div class="section" id="insightsSection" style="display: none;">
+            <div class="section-title">Triggered Insights</div>
+            <div class="insight-container">
+                <div class="table-container">
+                    <table id="insightsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%">Rule / Type</th>
+                                <th style="width: 10%">Severity</th>
+                                <th>Message</th>
+                                <th style="width: 13%">Date</th>
+                                <th style="width: 8%"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="insightsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Modal -->
+        <div class="modal-overlay" id="reviewModal">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <span class="modal-header-title">Review Insight</span>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-context">
+                        <div class="ctx-label">Rule Name</div>
+                        <div class="ctx-value" id="ctx-ruleName">—</div>
+                        <div class="ctx-label">Severity</div>
+                        <div class="ctx-value" id="ctx-severity">—</div>
+                        <div class="ctx-label">Message</div>
+                        <div class="ctx-value" id="ctx-message">—</div>
+                    </div>
+                    <div class="modal-action">
+                        <div>
+                            <div class="action-label">Resolution Note</div>
+                            <textarea id="resolutionNote" placeholder="Describe the reason for this action…"></textarea>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn-approve" onclick="submitAction('approve')">&#10003; Approve</button>
+                            <button class="btn-override" onclick="submitAction('override')">&#9998; Override</button>
+                            <button class="btn-archive" onclick="submitAction('archive')">&#128190; Archive</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <details id="analyticsDetails">
+            <summary>View Advanced Analytics</summary>
+            <div class="charts-grid">
+                <div class="chart-box">
+                    <div class="chart-title">Monthly Sales Trend</div>
+                    <canvas id="salesTimeChart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">Revenue by Product Line</div>
+                    <canvas id="salesProductChart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">Order Status Distribution</div>
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </details>
     </div>
 
-    <div class="stats-grid">
-        <div class="card">
-            <div class="card-label">Total Records Processed</div>
-            <div class="card-value" id="totalRecords">-</div>
-        </div>
-        <div class="card">
-            <div class="card-label">Active Insights</div>
-            <div class="card-value" id="insightCount">-</div>
-        </div>
-    </div>
+    <script>
+        let dashboardData = null;
+        let charts = {};
+        let allInsights = [];
+        let currentInsightId = null;
 
-    <div class="section" id="insightsSection" style="display: none;">
-        <div class="section-title">Triggered Insights</div>
-        <div class="table-container">
-            <table id="insightsTable">
-                <thead>
-                    <tr>
-                        <th style="width: 20%">Rule Name</th>
-                        <th style="width: 15%">Type</th>
-                        <th style="width: 10%">Severity</th>
-                        <th>Message</th>
-                        <th style="width: 15%">Date</th>
-                    </tr>
-                </thead>
-                <tbody id="insightsBody"></tbody>
-            </table>
-        </div>
-    </div>
+        // --- MAIN FETCH ---
+        async function loadDashboard() {
+            try {
+                const res = await fetch('/api/admin/dashboard-stats', {
+                    headers: { 'X-Tenant-ID': 'default' }
+                });
+                if (!res.ok) throw new Error('Network response was not ok');
 
-    <details id="analyticsDetails">
-        <summary>View Advanced Analytics</summary>
-        <div class="charts-grid">
-            <div class="chart-box">
-                <div class="chart-title">Monthly Sales Trend</div>
-                <canvas id="salesTimeChart"></canvas>
-            </div>
-            <div class="chart-box">
-                <div class="chart-title">Revenue by Product Line</div>
-                <canvas id="salesProductChart"></canvas>
-            </div>
-            <div class="chart-box">
-                <div class="chart-title">Order Status Distribution</div>
-                <canvas id="statusChart"></canvas>
-            </div>
-        </div>
-    </details>
-</div>
+                const data = await res.json();
+                dashboardData = data;
+                allInsights = data.insights || [];
 
-<script>
-    let dashboardData = null;
-    let charts = {}; 
+                renderKPIs(data);
+                renderInsights(allInsights);
 
-    // --- MAIN FETCH ---
-    async function loadDashboard() {
-        try {
-            const res = await fetch('/api/admin/dashboard-stats', {
-                headers: { 'X-Tenant-ID': 'default' }
-            });
-            if (!res.ok) throw new Error('Network response was not ok');
-            
-            const data = await res.json();
-            dashboardData = data;
-            
-            renderKPIs(data);
-            renderInsights(data.insights || []);
-
-        } catch (error) {
-            console.error('Error loading dashboard:', error);
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
         }
-    }
 
-    // --- RENDER FUNCTIONS ---
-    function renderKPIs(data) {
-        document.getElementById('totalRecords').textContent = (data.totalRecords || 0).toLocaleString();
-        document.getElementById('insightCount').textContent = (data.insightCount || 0).toLocaleString();
-    }
+        // --- RENDER FUNCTIONS ---
+        function renderKPIs(data) {
+            document.getElementById('totalRecords').textContent = (data.totalRecords || 0).toLocaleString();
+            document.getElementById('insightCount').textContent = (data.insightCount || 0).toLocaleString();
+        }
 
-    function renderInsights(insights) {
-        const section = document.getElementById('insightsSection');
-        const tbody = document.getElementById('insightsBody');
-        
-        if (insights.length > 0) {
-            section.style.display = 'block';
-            tbody.innerHTML = insights.map(i => {
-                const severity = i.severity || 'INFO';
-                return `
+        function renderInsights(insights) {
+            const section = document.getElementById('insightsSection');
+            const tbody = document.getElementById('insightsBody');
+
+            if (insights.length > 0) {
+                section.style.display = 'block';
+                tbody.innerHTML = insights.map(i => {
+                    const severity = i.severity || 'INFO';
+                    const date = i.createdAt ? new Date(i.createdAt).toLocaleDateString() : '-';
+                    return `
                     <tr>
-                        <td style="font-weight: 500">${i.ruleName || '-'}</td>
-                        <td style="color: #666; font-size: 12px">${i.insightType || '-'}</td>
+                        <td>
+                            <div style="font-weight:600;font-size:13px">${i.ruleName || '-'}</div>
+                            <div style="font-size:11px;color:#999;margin-top:2px;text-transform:uppercase;letter-spacing:0.3px">${i.insightType || '-'}</div>
+                        </td>
                         <td><span class="badge severity-${severity}">${severity}</span></td>
-                        <td>${i.message || ''}</td>
-                        <td style="color: #666; font-size: 12px">${i.createdAt ? new Date(i.createdAt).toLocaleDateString() : '-'}</td>
+                        <td style="color:#444;font-size:13px">${i.message || ''}</td>
+                        <td style="color:#999;font-size:12px">${date}</td>
+                        <td><button class="btn-review" onclick="openReviewModal('${i.id}')">Review</button></td>
                     </tr>
                 `;
-            }).join('');
-        } else {
-            section.style.display = 'none';
+                }).join('');
+            } else {
+                section.style.display = 'none';
+            }
         }
-    }
 
-    // --- CHART RENDERER (FIXED) ---
-    function renderCharts() {
-        if (!dashboardData) return;
+        // --- MODAL FUNCTIONS ---
+        function openReviewModal(id) {
+            const insight = allInsights.find(i => String(i.id) === String(id));
+            if (!insight) return;
+            currentInsightId = id;
+            const severity = insight.severity || 'INFO';
+            document.getElementById('ctx-ruleName').textContent = insight.ruleName || '—';
+            document.getElementById('ctx-severity').innerHTML = `<span class="badge severity-${severity}">${severity}</span>`;
+            document.getElementById('ctx-message').textContent = insight.message || '—';
+            document.getElementById('resolutionNote').value = '';
+            document.getElementById('reviewModal').classList.add('active');
+        }
 
-        // Cấu hình chung cho Chart
-        const commonOptions = {
-            responsive: true,
-            maintainAspectRatio: false, // QUAN TRỌNG: Tắt cái này đi để không bị chảy xệ
-            plugins: { legend: { display: false } },
-            layout: { padding: 10 }
+        function closeModal() {
+            document.getElementById('reviewModal').classList.remove('active');
+            document.getElementById('resolutionNote').value = '';
+            currentInsightId = null;
+        }
+
+        async function submitAction(actionType) {
+            if (!currentInsightId) return;
+            const note = document.getElementById('resolutionNote').value.trim();
+            try {
+                const res = await fetch(`/api/insights/${currentInsightId}/${actionType}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Tenant-ID': 'default'
+                    },
+                    body: JSON.stringify({ userId: 'admin', reason: note })
+                });
+                if (!res.ok) throw new Error(`Action failed: ${res.status}`);
+                closeModal();
+                loadDashboard();
+            } catch (err) {
+                console.error('submitAction error:', err);
+                alert(`Failed to ${actionType} insight. Please try again.`);
+            }
+        }
+
+        // Close modal on overlay click
+        document.getElementById('reviewModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+
+        // --- CHART RENDERER (FIXED) ---
+        function renderCharts() {
+            if (!dashboardData) return;
+
+            // Cấu hình chung cho Chart
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                layout: { padding: 10 }
+            };
+
+            const chartConfig = [
+                {
+                    id: 'salesTimeChart',
+                    type: 'line',
+                    labels: dashboardData.salesByMonth?.map(d => d.label),
+                    data: dashboardData.salesByMonth?.map(d => d.value),
+                    bg: 'rgba(0,0,0,0.05)',
+                    border: '#1a1a1a',
+                    fill: true,
+                    options: {
+                        ...commonOptions,
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                },
+                {
+                    id: 'salesProductChart',
+                    type: 'bar',
+                    labels: dashboardData.salesByProductLine?.map(d => d.label),
+                    data: dashboardData.salesByProductLine?.map(d => d.value),
+                    bg: '#1a1a1a',
+                    border: '#1a1a1a',
+                    fill: false,
+                    options: commonOptions
+                },
+                {
+                    id: 'statusChart',
+                    type: 'doughnut',
+                    labels: dashboardData.statusDistribution?.map(d => d.label),
+                    data: dashboardData.statusDistribution?.map(d => d.value),
+                    bg: ['#264653', '#2a9d8f', '#e9c46a', '#f4a261', '#e76f51', '#ccc'],
+                    border: '#fff',
+                    fill: false,
+                    options: commonOptions
+                }
+            ];
+
+            chartConfig.forEach(cfg => {
+                if (!cfg.labels || !cfg.data) return;
+
+                const ctx = document.getElementById(cfg.id);
+                if (charts[cfg.id]) charts[cfg.id].destroy();
+
+                // Doughnut / Pie charts must not render X/Y axes
+                const resolvedOptions = (cfg.type === 'doughnut' || cfg.type === 'pie')
+                    ? {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: 10 },
+                        plugins: { legend: { display: true, position: 'right' } },
+                        scales: { x: { display: false }, y: { display: false } }
+                    }
+                    : cfg.options;
+
+                charts[cfg.id] = new Chart(ctx, {
+                    type: cfg.type,
+                    data: {
+                        labels: cfg.labels,
+                        datasets: [{
+                            data: cfg.data,
+                            backgroundColor: cfg.bg,
+                            borderColor: cfg.border,
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: cfg.fill
+                        }]
+                    },
+                    options: resolvedOptions
+                });
+            });
+        }
+
+        // --- HANDLERS ---
+        window.handleUpload = async (type) => {
+            const fileInput = document.getElementById(type === 'sales' ? 'salesFile' : 'rulesFile');
+            const statusSpan = document.getElementById(type === 'sales' ? 'salesStatus' : 'rulesStatus');
+
+            if (!fileInput.files[0]) return alert("Please select a file");
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            statusSpan.textContent = "Uploading...";
+            statusSpan.className = "status";
+
+            try {
+                const endpoint = type === 'sales' ? '/api/admin/upload-sales' : '/api/admin/upload-rules';
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Tenant-ID': 'default' }
+                });
+
+                if (!res.ok) throw new Error();
+
+                if (type === 'rules') {
+                    // Rules uploaded successfully — unlock the Sales Data row
+                    statusSpan.textContent = "✅ Rules Active";
+                    statusSpan.classList.add('success');
+                    document.getElementById('salesFile').disabled = false;
+                    document.getElementById('salesUploadBtn').disabled = false;
+                    document.getElementById('salesHint').style.display = 'none';
+                } else {
+                    statusSpan.textContent = "Done";
+                    statusSpan.classList.add('success');
+                }
+                loadDashboard();
+
+            } catch (e) {
+                statusSpan.textContent = "Error";
+                statusSpan.classList.add('error');
+            }
         };
 
-        const chartConfig = [
-            {
-                id: 'salesTimeChart',
-                type: 'line',
-                labels: dashboardData.salesByMonth?.map(d => d.label),
-                data: dashboardData.salesByMonth?.map(d => d.value),
-                bg: 'rgba(0,0,0,0.05)',
-                border: '#1a1a1a',
-                fill: true,
-                options: {
-                    ...commonOptions,
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            },
-            {
-                id: 'salesProductChart',
-                type: 'bar',
-                labels: dashboardData.salesByProductLine?.map(d => d.label),
-                data: dashboardData.salesByProductLine?.map(d => d.value),
-                bg: '#1a1a1a',
-                border: '#1a1a1a',
-                fill: false,
-                options: commonOptions
-            },
-            {
-                id: 'statusChart',
-                type: 'doughnut',
-                labels: dashboardData.statusDistribution?.map(d => d.label),
-                data: dashboardData.statusDistribution?.map(d => d.value),
-                bg: ['#264653', '#2a9d8f', '#e9c46a', '#f4a261', '#e76f51', '#ccc'],
-                border: '#fff',
-                fill: false,
-                options: commonOptions
+        // Lazy load charts (chỉ vẽ khi mở ra)
+        document.getElementById('analyticsDetails').addEventListener('toggle', function (e) {
+            if (this.open) {
+                setTimeout(renderCharts, 100);
             }
-        ];
-
-        chartConfig.forEach(cfg => {
-            if (!cfg.labels || !cfg.data) return;
-
-            const ctx = document.getElementById(cfg.id);
-            if (charts[cfg.id]) charts[cfg.id].destroy();
-
-            charts[cfg.id] = new Chart(ctx, {
-                type: cfg.type,
-                data: {
-                    labels: cfg.labels,
-                    datasets: [{
-                        data: cfg.data,
-                        backgroundColor: cfg.bg,
-                        borderColor: cfg.border,
-                        borderWidth: 2,
-                        tension: 0.3,
-                        fill: cfg.fill
-                    }]
-                },
-                options: cfg.options // Sử dụng options đã tắt maintainAspectRatio
-            });
         });
-    }
 
-    // --- HANDLERS ---
-    window.handleUpload = async (type) => {
-        const fileInput = document.getElementById(type === 'sales' ? 'salesFile' : 'rulesFile');
-        const statusSpan = document.getElementById(type === 'sales' ? 'salesStatus' : 'rulesStatus');
-        
-        if (!fileInput.files[0]) return alert("Please select a file");
-
-        const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
-        statusSpan.textContent = "Uploading...";
-        statusSpan.className = "status";
-
-        try {
-            const endpoint = type === 'sales' ? '/api/admin/upload-sales' : '/api/admin/upload-rules';
-            const res = await fetch(endpoint, {
-                method: 'POST',
-                body: formData,
-                headers: { 'X-Tenant-ID': 'default' }
-            });
-
-            if (!res.ok) throw new Error();
-            
-            statusSpan.textContent = "Done";
-            statusSpan.classList.add('success');
-            loadDashboard();
-
-        } catch (e) {
-            statusSpan.textContent = "Error";
-            statusSpan.classList.add('error');
-        }
-    };
-
-    // Lazy load charts (chỉ vẽ khi mở ra)
-    document.getElementById('analyticsDetails').addEventListener('toggle', function(e) {
-        if (this.open) {
-            setTimeout(renderCharts, 100);
-        }
-    });
-
-    // Init
-    document.addEventListener('DOMContentLoaded', loadDashboard);
-</script>
+        // Init
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
 
 </body>
+
 </html>
