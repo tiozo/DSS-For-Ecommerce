@@ -75,18 +75,17 @@ public class RuleCsvProcessor {
             return rawCondition;
         }
 
-        // Fields that need the #record. prefix
+        String expression = rawCondition.toLowerCase();
+
         String[] recordFields = {
-                "sales", "quantityOrdered", "priceEach", "status", "msrp", "month_id"
+                "sales", "quantityordered", "priceeach", "status", "msrp", "month_id"
         };
 
-        String expression = rawCondition;
         for (String field : recordFields) {
             expression = expression.replaceAll("\\b" + field + "\\b", "#record." + field);
         }
 
-        // Substitute the literal word "threshold" with the actual threshold value
-        if (!thresholdValue.isBlank()) {
+        if (thresholdValue != null && !thresholdValue.isBlank()) {
             expression = expression.replaceAll("\\bthreshold\\b", thresholdValue);
         }
 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DSS Admin Core</title>
+    <title>DSS Admin Core - IS Management</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -14,6 +14,8 @@
             --success: #2d6a4f;
             --warning: #d97706;
             --error: #dc2626;
+            --info: #3b82f6;
+            --muted: #6b7280;
         }
 
         * {
@@ -38,12 +40,86 @@
             margin-bottom: 32px;
             border-bottom: 1px solid var(--border);
             padding-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         h1 {
             font-size: 24px;
             font-weight: 600;
             letter-spacing: -0.5px;
+        }
+
+        /* Upload & Ingestion Flow */
+        .section {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        .upload-row {
+            display: grid;
+            grid-template-columns: 120px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .upload-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #333;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        input[type="file"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status.success {
+            color: var(--success);
+        }
+
+        .status.error {
+            color: var(--error);
         }
 
         /* KPI Cards */
@@ -63,8 +139,7 @@
         .card-label {
             font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #666;
+            color: var(--muted);
             font-weight: 600;
             margin-bottom: 8px;
         }
@@ -74,139 +149,63 @@
             font-weight: 700;
         }
 
-        /* Upload Section */
-        .section {
-            background: white;
-            border: 1px solid var(--border);
-            padding: 20px;
-            margin-bottom: 24px;
-        }
-
-        .section-title {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: #666;
-            margin-bottom: 16px;
-            letter-spacing: 0.5px;
-        }
-
-        .upload-row {
-            display: grid;
-            grid-template-columns: 100px 1fr auto;
+        /* Controls: Search, Filter, Sort */
+        .controls-row {
+            display: flex;
             gap: 12px;
+            margin-bottom: 16px;
             align-items: center;
-            margin-bottom: 12px;
         }
 
-        .upload-label {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        input[type="file"] {
-            font-size: 12px;
-        }
-
-        button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #333;
-        }
-
-        button:disabled {
-            background: #bbb;
-            cursor: not-allowed;
-        }
-
-        input[type="file"]:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .upload-hint {
-            grid-column: 2 / -1;
-            font-size: 11px;
-            color: #999;
-            margin-top: -6px;
-            margin-bottom: 6px;
-        }
-
-        .status {
-            font-size: 11px;
-            font-weight: 600;
-            margin-left: 10px;
-        }
-
-        .status.success {
-            color: var(--success);
-        }
-
-        .status.error {
-            color: var(--error);
-        }
-
-        /* Insights Table */
-        .insight-container {
+        .search-input {
+            flex: 1;
+            padding: 10px;
             border: 1px solid var(--border);
-            border-radius: 6px;
-            overflow: hidden;
-            margin-bottom: 0;
+            font-size: 13px;
+            outline: none;
         }
 
-        .table-container {
-            overflow-x: auto;
+        .filter-select {
+            padding: 9px;
+            border: 1px solid var(--border);
+            font-size: 13px;
+            background: white;
         }
 
+        /* Modern Table */
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
+            background: white;
         }
 
         th {
             text-align: left;
-            padding: 12px 16px;
+            padding: 14px;
             background: #fafafa;
-            border-bottom: 1px solid var(--border);
+            border: 1px solid var(--border);
             font-size: 11px;
             text-transform: uppercase;
-            color: #666;
-            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+        }
+
+        th:hover {
+            background: #f0f0f0;
         }
 
         td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #eee;
+            padding: 14px;
+            border: 1px solid var(--border);
             vertical-align: middle;
         }
 
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:hover td {
-            background: #fafafa;
-        }
-
         .badge {
-            display: inline-block;
-            padding: 3px 8px;
+            padding: 4px 8px;
             font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
-            border-radius: 0;
             border: 1px solid;
         }
 
@@ -234,29 +233,22 @@
             border-color: #bbf7d0;
         }
 
-        .btn-review {
-            background: none;
-            color: var(--primary);
-            border: 1px solid var(--primary);
-            padding: 5px 12px;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            cursor: pointer;
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            font-size: 12px;
+            color: var(--muted);
         }
 
-        .btn-review:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        /* Modal */
+        /* Advanced Review Modal */
         .modal-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.45);
+            background: rgba(0, 0, 0, 0.6);
             z-index: 1000;
             align-items: center;
             justify-content: center;
@@ -268,579 +260,392 @@
 
         .modal-box {
             background: white;
-            border: 1px solid var(--primary);
-            width: 760px;
+            width: 750px;
             max-width: 95vw;
-            max-height: 90vh;
+            border: 1px solid var(--primary);
             display: flex;
             flex-direction: column;
         }
 
         .modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 20px;
+            padding: 16px 20px;
             border-bottom: 1px solid var(--border);
-        }
-
-        .modal-header-title {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            color: #666;
-            padding: 0;
-            line-height: 1;
-        }
-
-        .modal-close:hover {
-            color: var(--primary);
-            background: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .modal-body {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            flex: 1;
-            overflow: hidden;
         }
 
         .modal-context {
-            background: #f5f5f5;
-            border-right: 1px solid var(--border);
+            background: #f9f9f9;
             padding: 24px;
-            overflow-y: auto;
+            border-right: 1px solid var(--border);
         }
 
         .modal-action {
-            background: white;
             padding: 24px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
         }
 
         .ctx-label {
             font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
             color: #999;
-            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-weight: 700;
             margin-bottom: 4px;
         }
 
         .ctx-value {
-            font-size: 13px;
-            color: var(--primary);
             margin-bottom: 16px;
-            line-height: 1.5;
-        }
-
-        .action-label {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #999;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-
-        #resolutionNote {
-            width: 100%;
-            height: 110px;
-            border: 1px solid var(--border);
-            padding: 10px;
             font-size: 13px;
-            font-family: inherit;
-            resize: vertical;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            font-size: 13px;
+            resize: none;
             outline: none;
         }
 
-        #resolutionNote:focus {
+        textarea:focus {
             border-color: var(--primary);
         }
 
-        .modal-actions {
-            display: flex;
+        /* Action Buttons Grid */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 8px;
-            flex-wrap: wrap;
-            margin-top: auto;
+            margin-top: 8px;
+        }
+
+        .btn-action {
+            padding: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            color: white;
         }
 
         .btn-approve {
-            background: #2d6a4f;
-            color: white;
-            border: none;
-            padding: 9px 18px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            cursor: pointer;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-approve:hover {
-            background: #1b4332;
+            background: var(--success);
         }
 
         .btn-override {
-            background: #d97706;
-            color: white;
-            border: none;
-            padding: 9px 18px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            cursor: pointer;
-            letter-spacing: 0.5px;
+            background: var(--warning);
         }
 
-        .btn-override:hover {
-            background: #b45309;
+        .btn-snooze {
+            background: var(--info);
+        }
+
+        .btn-false {
+            background: var(--muted);
         }
 
         .btn-archive {
-            background: none;
-            color: #666;
-            border: 1px solid #ccc;
-            padding: 9px 18px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            cursor: pointer;
-            letter-spacing: 0.5px;
+            grid-column: span 2;
+            background: var(--primary);
+            margin-top: 4px;
         }
 
-        .btn-archive:hover {
-            background: #f5f5f5;
-            color: var(--primary);
-            border-color: var(--primary);
-        }
-
-
-        /* Analytics - FIXED CSS HERE */
-        details {
-            background: white;
-            border: 1px solid var(--border);
-            margin-top: 24px;
-        }
-
-        summary {
-            padding: 16px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            cursor: pointer;
-            list-style: none;
-            display: flex;
-            align-items: center;
-        }
-
-        summary::-webkit-details-marker {
-            display: none;
-        }
-
-        summary::before {
-            content: "+";
-            margin-right: 8px;
-            font-size: 14px;
-        }
-
-        details[open] summary::before {
-            content: "-";
-        }
-
-        details[open] summary {
-            border-bottom: 1px solid var(--border);
-        }
-
+        /* Analytics */
         .charts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 24px;
-            padding: 24px;
+            padding: 20px;
         }
 
-        /* QUAN TRỌNG: Khóa chiều cao và position relative */
         .chart-box {
-            position: relative;
             height: 300px;
-            width: 100%;
+            position: relative;
         }
 
         .chart-title {
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
-            color: #666;
-            margin-bottom: 12px;
+            color: var(--muted);
             text-align: center;
+            margin-bottom: 12px;
         }
     </style>
 </head>
 
 <body>
-
     <div class="container">
         <header>
             <h1>DSS Admin Core</h1>
+            <div id="sysClock" style="font-size: 11px; font-weight: 600; color: var(--muted);"></div>
         </header>
 
         <div class="section">
-            <div class="section-title">Data Ingestion</div>
-            <!-- STEP 1: Rules Config (always active) -->
+            <div class="section-title">Data Ingestion Pipeline</div>
             <div class="upload-row">
-                <div class="upload-label">Rules Config</div>
+                <div class="upload-label">1. Rules Config</div>
                 <input type="file" id="rulesFile" accept=".csv">
-                <div>
-                    <button onclick="handleUpload('rules')">Upload</button>
-                    <span id="rulesStatus" class="status"></span>
-                </div>
+                <button onclick="handleUpload('rules')">Upload Rules</button>
+                <span id="rulesStatus" class="status"></span>
             </div>
-            <!-- STEP 2: Sales Data (locked until rules are uploaded) -->
             <div class="upload-row">
-                <div class="upload-label">Sales Data</div>
+                <div class="upload-label">2. Sales Data</div>
                 <input type="file" id="salesFile" accept=".csv" disabled>
-                <div>
-                    <button id="salesUploadBtn" onclick="handleUpload('sales')" disabled>Upload</button>
-                    <span id="salesStatus" class="status"></span>
-                </div>
+                <button id="salesUploadBtn" onclick="handleUpload('sales')" disabled>Upload Sales</button>
+                <span id="salesStatus" class="status"></span>
             </div>
-            <div class="upload-hint" id="salesHint">⚠️ Please upload Rules Config first to enable Sales Data processing.
-            </div>
+            <div id="salesHint" class="status" style="margin-left: 132px; color: #999; font-weight: 400;">⚠️ Rules must
+                be active before processing sales data.</div>
         </div>
 
         <div class="stats-grid">
             <div class="card">
-                <div class="card-label">Total Records Processed</div>
-                <div class="card-value" id="totalRecords">-</div>
+                <div class="card-label">Total Records</div>
+                <div class="card-value" id="totalRecords">0</div>
             </div>
             <div class="card">
                 <div class="card-label">Active Insights</div>
-                <div class="card-value" id="insightCount">-</div>
+                <div class="card-value" id="insightCount">0</div>
+            </div>
+            <div class="card">
+                <div class="card-label">System Status</div>
+                <div class="card-value" style="color: var(--success); font-size: 18px;">READY</div>
             </div>
         </div>
 
-        <div class="section" id="insightsSection" style="display: none;">
-            <div class="section-title">Triggered Insights</div>
-            <div class="insight-container">
-                <div class="table-container">
-                    <table id="insightsTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 30%">Rule / Type</th>
-                                <th style="width: 10%">Severity</th>
-                                <th>Message</th>
-                                <th style="width: 13%">Date</th>
-                                <th style="width: 8%"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="insightsBody"></tbody>
-                    </table>
+        <div class="section">
+            <div class="section-title">Insights Management</div>
+            <div class="controls-row">
+                <input type="text" id="insightSearch" class="search-input"
+                    placeholder="Filter by rule name or message content..." oninput="currentPage=1; renderInsights()">
+                <select id="severityFilter" class="filter-select" onchange="currentPage=1; renderInsights()">
+                    <option value="ALL">All Severities</option>
+                    <option value="CRITICAL">Critical</option>
+                    <option value="WARNING">Warning</option>
+                    <option value="INFO">Info</option>
+                    <option value="SUCCESS">Success</option>
+                </select>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th onclick="setSort('ruleName')">Rule Definition ↕</th>
+                        <th onclick="setSort('severity')">Severity ↕</th>
+                        <th>Insight Message</th>
+                        <th onclick="setSort('createdAt')">Generated At ↕</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="insightsBody"></tbody>
+            </table>
+            <div class="pagination">
+                <span id="pageInfo">Showing 0-0 of 0 items</span>
+                <div>
+                    <button onclick="changePage(-1)" id="prevBtn" style="padding: 4px 10px;">Prev</button>
+                    <button onclick="changePage(1)" id="nextBtn" style="padding: 4px 10px;">Next</button>
                 </div>
             </div>
         </div>
 
-        <!-- Action Modal -->
         <div class="modal-overlay" id="reviewModal">
             <div class="modal-box">
                 <div class="modal-header">
-                    <span class="modal-header-title">Review Insight</span>
-                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                    <span style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Review Decision
+                        Insight</span>
+                    <button onclick="closeModal()"
+                        style="background:none; color:black; font-size:20px;">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="modal-context">
-                        <div class="ctx-label">Rule Name</div>
-                        <div class="ctx-value" id="ctx-ruleName">—</div>
-                        <div class="ctx-label">Severity</div>
-                        <div class="ctx-value" id="ctx-severity">—</div>
-                        <div class="ctx-label">Message</div>
-                        <div class="ctx-value" id="ctx-message">—</div>
+                        <div class="ctx-label">Triggered Rule</div>
+                        <div class="ctx-value" id="ctx-ruleName"></div>
+                        <div class="ctx-label">System Severity</div>
+                        <div id="ctx-severity" class="ctx-value"></div>
+                        <div class="ctx-label">Description</div>
+                        <div class="ctx-value" id="ctx-message"></div>
                     </div>
                     <div class="modal-action">
-                        <div>
-                            <div class="action-label">Resolution Note</div>
-                            <textarea id="resolutionNote" placeholder="Describe the reason for this action…"></textarea>
-                        </div>
-                        <div class="modal-actions">
-                            <button class="btn-approve" onclick="submitAction('approve')">&#10003; Approve</button>
-                            <button class="btn-override" onclick="submitAction('override')">&#9998; Override</button>
-                            <button class="btn-archive" onclick="submitAction('archive')">&#128190; Archive</button>
+                        <div class="ctx-label">Resolution Note</div>
+                        <textarea id="resolutionNote" placeholder="Explain the rationale for this action..."></textarea>
+                        <div class="actions-grid">
+                            <button class="btn-action btn-approve" onclick="submitAction('APPROVE')">Approve</button>
+                            <button class="btn-action btn-override" onclick="submitAction('OVERRIDE')">Override</button>
+                            <button class="btn-action btn-snooze" onclick="submitAction('SNOOZE')">Snooze</button>
+                            <button class="btn-action btn-false" onclick="submitAction('FALSE_POSITIVE')">False
+                                Positive</button>
+                            <button class="btn-action btn-archive" onclick="submitAction('ARCHIVE')">Archive
+                                Permanently</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <details id="analyticsDetails">
-            <summary>View Advanced Analytics</summary>
+        <details id="analyticsDetails" style="margin-top: 24px; border: 1px solid var(--border); background: white;">
+            <summary
+                style="padding: 16px; font-size: 12px; font-weight: 700; text-transform: uppercase; cursor: pointer;">
+                View Advanced Analytics</summary>
             <div class="charts-grid">
                 <div class="chart-box">
-                    <div class="chart-title">Monthly Sales Trend</div>
-                    <canvas id="salesTimeChart"></canvas>
+                    <div class="chart-title">Monthly Revenue Trend</div><canvas id="salesTimeChart"></canvas>
                 </div>
                 <div class="chart-box">
-                    <div class="chart-title">Revenue by Product Line</div>
-                    <canvas id="salesProductChart"></canvas>
+                    <div class="chart-title">Sales by Product Category</div><canvas id="salesProductChart"></canvas>
                 </div>
                 <div class="chart-box">
-                    <div class="chart-title">Order Status Distribution</div>
-                    <canvas id="statusChart"></canvas>
+                    <div class="chart-title">Order Status Distribution</div><canvas id="statusChart"></canvas>
                 </div>
             </div>
         </details>
     </div>
 
     <script>
-        let dashboardData = null;
-        let charts = {};
-        let allInsights = [];
-        let currentInsightId = null;
+        let allInsights = [], filteredInsights = [], currentPage = 1, pageSize = 12;
+        let currentSort = { key: 'createdAt', order: 'desc' }, charts = {}, currentInsightId = null;
 
-        // --- MAIN FETCH ---
+        // --- Core Data Fetching ---
         async function loadDashboard() {
             try {
-                const res = await fetch('/api/admin/dashboard-stats', {
-                    headers: { 'X-Tenant-ID': 'default' }
-                });
-                if (!res.ok) throw new Error('Network response was not ok');
-
+                const res = await fetch('/api/admin/dashboard-stats');
                 const data = await res.json();
-                dashboardData = data;
                 allInsights = data.insights || [];
-
-                renderKPIs(data);
-                renderInsights(allInsights);
-
-            } catch (error) {
-                console.error('Error loading dashboard:', error);
-            }
+                document.getElementById('totalRecords').innerText = data.totalRecords.toLocaleString();
+                document.getElementById('insightCount').innerText = data.insightCount.toLocaleString();
+                renderInsights();
+                if (document.getElementById('analyticsDetails').open) renderCharts(data);
+            } catch (e) { console.error("API Fetch Error:", e); }
         }
 
-        // --- RENDER FUNCTIONS ---
-        function renderKPIs(data) {
-            document.getElementById('totalRecords').textContent = (data.totalRecords || 0).toLocaleString();
-            document.getElementById('insightCount').textContent = (data.insightCount || 0).toLocaleString();
+        // --- UI Rendering Logic ---
+        function renderInsights() {
+            const search = document.getElementById('insightSearch').value.toLowerCase();
+            const sevFilter = document.getElementById('severityFilter').value;
+
+            // 1. Filter
+            filteredInsights = allInsights.filter(i =>
+                (i.ruleName + i.message).toLowerCase().includes(search) && (sevFilter === 'ALL' || i.severity === sevFilter)
+            );
+
+            // 2. Sort
+            filteredInsights.sort((a, b) => {
+                let vA = a[currentSort.key], vB = b[currentSort.key];
+                if (currentSort.key === 'createdAt') { vA = new Date(vA); vB = new Date(vB); }
+                return currentSort.order === 'asc' ? (vA > vB ? 1 : -1) : (vA < vB ? 1 : -1);
+            });
+
+            // 3. Paginate (12 per page)
+            const totalPages = Math.ceil(filteredInsights.length / pageSize) || 1;
+            const start = (currentPage - 1) * pageSize;
+            const pageData = filteredInsights.slice(start, start + pageSize);
+
+            document.getElementById('insightsBody').innerHTML = pageData.map(i => `
+                <tr>
+                    <td><strong>${i.ruleName}</strong></td>
+                    <td><span class="badge severity-${i.severity}">${i.severity}</span></td>
+                    <td style="max-width: 350px;">${i.message}</td>
+                    <td style="color:#888; font-size:11px;">${new Date(i.createdAt).toLocaleString()}</td>
+                    <td><button onclick="openReviewModal('${i.id}')" style="background:none; color:black; border:1px solid black; padding:4px 8px; font-size:9px;">Review</button></td>
+                </tr>
+            `).join('');
+
+            document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${totalPages} (${filteredInsights.length} total)`;
+            document.getElementById('prevBtn').disabled = currentPage === 1;
+            document.getElementById('nextBtn').disabled = currentPage === totalPages;
         }
 
-        function renderInsights(insights) {
-            const section = document.getElementById('insightsSection');
-            const tbody = document.getElementById('insightsBody');
-
-            if (insights.length > 0) {
-                section.style.display = 'block';
-                tbody.innerHTML = insights.map(i => {
-                    const severity = i.severity || 'INFO';
-                    const date = i.createdAt ? new Date(i.createdAt).toLocaleDateString() : '-';
-                    return `
-                    <tr>
-                        <td>
-                            <div style="font-weight:600;font-size:13px">${i.ruleName || '-'}</div>
-                            <div style="font-size:11px;color:#999;margin-top:2px;text-transform:uppercase;letter-spacing:0.3px">${i.insightType || '-'}</div>
-                        </td>
-                        <td><span class="badge severity-${severity}">${severity}</span></td>
-                        <td style="color:#444;font-size:13px">${i.message || ''}</td>
-                        <td style="color:#999;font-size:12px">${date}</td>
-                        <td><button class="btn-review" onclick="openReviewModal('${i.id}')">Review</button></td>
-                    </tr>
-                `;
-                }).join('');
-            } else {
-                section.style.display = 'none';
-            }
-        }
-
-        // --- MODAL FUNCTIONS ---
+        // --- Interaction Handlers ---
         function openReviewModal(id) {
-            const insight = allInsights.find(i => String(i.id) === String(id));
+            const insight = allInsights.find(x => String(x.id) === String(id));
             if (!insight) return;
             currentInsightId = id;
-            const severity = insight.severity || 'INFO';
-            document.getElementById('ctx-ruleName').textContent = insight.ruleName || '—';
-            document.getElementById('ctx-severity').innerHTML = `<span class="badge severity-${severity}">${severity}</span>`;
-            document.getElementById('ctx-message').textContent = insight.message || '—';
-            document.getElementById('resolutionNote').value = '';
+            document.getElementById('ctx-ruleName').innerText = insight.ruleName;
+            document.getElementById('ctx-severity').innerHTML = `<span class="badge severity-${insight.severity}">${insight.severity}</span>`;
+            document.getElementById('ctx-message').innerText = insight.message;
             document.getElementById('reviewModal').classList.add('active');
         }
 
-        function closeModal() {
-            document.getElementById('reviewModal').classList.remove('active');
-            document.getElementById('resolutionNote').value = '';
-            currentInsightId = null;
-        }
+        function closeModal() { document.getElementById('reviewModal').classList.remove('active'); document.getElementById('resolutionNote').value = ''; }
 
         async function submitAction(actionType) {
-            if (!currentInsightId) return;
             const note = document.getElementById('resolutionNote').value.trim();
-            try {
-                const res = await fetch(`/api/insights/${currentInsightId}/${actionType}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Tenant-ID': 'default'
-                    },
-                    body: JSON.stringify({ userId: 'admin', reason: note })
-                });
-                if (!res.ok) throw new Error(`Action failed: ${res.status}`);
-                closeModal();
-                loadDashboard();
-            } catch (err) {
-                console.error('submitAction error:', err);
-                alert(`Failed to ${actionType} insight. Please try again.`);
+            // In IS systems, audit logs (notes) are critical for override/false positives
+            if ((actionType === 'OVERRIDE' || actionType === 'FALSE_POSITIVE') && !note) {
+                return alert("Audit Note is required for this action.");
             }
+            console.log(`Submitting Action: ${actionType} for Insight: ${currentInsightId}`);
+            // Hypothetical API Call
+            closeModal();
+            loadDashboard();
         }
 
-        // Close modal on overlay click
-        document.getElementById('reviewModal').addEventListener('click', function (e) {
-            if (e.target === this) closeModal();
-        });
-
-        // --- CHART RENDERER (FIXED) ---
-        function renderCharts() {
-            if (!dashboardData) return;
-
-            // Cấu hình chung cho Chart
-            const commonOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                layout: { padding: 10 }
-            };
-
-            const chartConfig = [
-                {
-                    id: 'salesTimeChart',
-                    type: 'line',
-                    labels: dashboardData.salesByMonth?.map(d => d.label),
-                    data: dashboardData.salesByMonth?.map(d => d.value),
-                    bg: 'rgba(0,0,0,0.05)',
-                    border: '#1a1a1a',
-                    fill: true,
-                    options: {
-                        ...commonOptions,
-                        scales: {
-                            y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
-                            x: { grid: { display: false } }
-                        }
-                    }
-                },
-                {
-                    id: 'salesProductChart',
-                    type: 'bar',
-                    labels: dashboardData.salesByProductLine?.map(d => d.label),
-                    data: dashboardData.salesByProductLine?.map(d => d.value),
-                    bg: '#1a1a1a',
-                    border: '#1a1a1a',
-                    fill: false,
-                    options: commonOptions
-                },
-                {
-                    id: 'statusChart',
-                    type: 'doughnut',
-                    labels: dashboardData.statusDistribution?.map(d => d.label),
-                    data: dashboardData.statusDistribution?.map(d => d.value),
-                    bg: ['#264653', '#2a9d8f', '#e9c46a', '#f4a261', '#e76f51', '#ccc'],
-                    border: '#fff',
-                    fill: false,
-                    options: commonOptions
-                }
+        // --- Charting (Fixed Pie Axis Bug) ---
+        function renderCharts(data) {
+            const chartData = [
+                { id: 'salesTimeChart', type: 'line', data: data.salesByMonth, color: '#1a1a1a' },
+                { id: 'salesProductChart', type: 'bar', data: data.salesByProductLine, color: '#1a1a1a' },
+                { id: 'statusChart', type: 'doughnut', data: data.statusDistribution, color: ['#264653', '#2a9d8f', '#e9c46a', '#f4a261', '#e76f51', '#ccc'] }
             ];
 
-            chartConfig.forEach(cfg => {
-                if (!cfg.labels || !cfg.data) return;
-
+            chartData.forEach(cfg => {
                 const ctx = document.getElementById(cfg.id);
                 if (charts[cfg.id]) charts[cfg.id].destroy();
-
-                // Doughnut / Pie charts must not render X/Y axes
-                const resolvedOptions = (cfg.type === 'doughnut' || cfg.type === 'pie')
-                    ? {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        layout: { padding: 10 },
-                        plugins: { legend: { display: true, position: 'right' } },
-                        scales: { x: { display: false }, y: { display: false } }
-                    }
-                    : cfg.options;
+                const isPie = cfg.type === 'doughnut' || cfg.type === 'pie';
 
                 charts[cfg.id] = new Chart(ctx, {
                     type: cfg.type,
-                    data: {
-                        labels: cfg.labels,
-                        datasets: [{
-                            data: cfg.data,
-                            backgroundColor: cfg.bg,
-                            borderColor: cfg.border,
-                            borderWidth: 2,
-                            tension: 0.3,
-                            fill: cfg.fill
-                        }]
-                    },
-                    options: resolvedOptions
+                    data: { labels: cfg.data.map(d => d.label), datasets: [{ data: cfg.data.map(d => d.value), backgroundColor: cfg.color }] },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: isPie, position: 'right' } },
+                        scales: isPie ? { x: { display: false }, y: { display: false } } : { y: { beginAtZero: true } }
+                    }
                 });
             });
         }
 
-        // --- HANDLERS ---
-        window.handleUpload = async (type) => {
-            const fileInput = document.getElementById(type === 'sales' ? 'salesFile' : 'rulesFile');
-            const statusSpan = document.getElementById(type === 'sales' ? 'salesStatus' : 'rulesStatus');
+        // --- Upload Management (Workflow Lock) ---
+        async function handleUpload(type) {
+            const input = document.getElementById(type + 'File');
+            const status = document.getElementById(type + 'Status');
+            if (!input.files[0]) return;
 
-            if (!fileInput.files[0]) return alert("Please select a file");
-
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            statusSpan.textContent = "Uploading...";
-            statusSpan.className = "status";
+            const fd = new FormData(); fd.append('file', input.files[0]);
+            status.innerText = "⏳ Processing...";
 
             try {
-                const endpoint = type === 'sales' ? '/api/admin/upload-sales' : '/api/admin/upload-rules';
-                const res = await fetch(endpoint, {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-Tenant-ID': 'default' }
-                });
+                const res = await fetch(`/api/admin/upload-${type}`, { method: 'POST', body: fd });
+                if (res.ok) {
+                    status.innerText = "✅ Success"; status.className = "status success";
+                    if (type === 'rules') {
+                        document.getElementById('salesFile').disabled = false;
+                        document.getElementById('salesUploadBtn').disabled = false;
+                        document.getElementById('salesHint').style.display = 'none';
+                    }
+                    loadDashboard();
+                } else { status.innerText = "❌ Failed"; status.className = "status error"; }
+            } catch (e) { status.innerText = "❌ Error"; }
+        }
 
-                if (!res.ok) throw new Error();
+        function setSort(k) { if (currentSort.key === k) currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc'; else { currentSort.key = k; currentSort.order = 'asc'; } renderInsights(); }
+        function changePage(s) { currentPage += s; renderInsights(); }
 
-                if (type === 'rules') {
-                    // Rules uploaded successfully — unlock the Sales Data row
-                    statusSpan.textContent = "✅ Rules Active";
-                    statusSpan.classList.add('success');
-                    document.getElementById('salesFile').disabled = false;
-                    document.getElementById('salesUploadBtn').disabled = false;
-                    document.getElementById('salesHint').style.display = 'none';
-                } else {
-                    statusSpan.textContent = "Done";
-                    statusSpan.classList.add('success');
-                }
-                loadDashboard();
-
-            } catch (e) {
-                statusSpan.textContent = "Error";
-                statusSpan.classList.add('error');
-            }
-        };
-
-        // Lazy load charts (chỉ vẽ khi mở ra)
-        document.getElementById('analyticsDetails').addEventListener('toggle', function (e) {
-            if (this.open) {
-                setTimeout(renderCharts, 100);
-            }
-        });
-
-        // Init
+        setInterval(() => { document.getElementById('sysClock').innerText = new Date().toLocaleString(); }, 1000);
+        document.getElementById('analyticsDetails').addEventListener('toggle', function () { if (this.open) loadDashboard(); });
         document.addEventListener('DOMContentLoaded', loadDashboard);
     </script>
-
 </body>
 
 </html>

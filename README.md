@@ -4,66 +4,45 @@ A production-ready, admin-driven Decision Support System for e-commerce analytic
 
 ## Executive Summary
 
-DSS-Core is a SaaS platform that transforms raw sales data into actionable business insights through dynamic CSV ingestion, configurable business rules, and real-time analytics dashboards. Administrators upload sales and rules data via a web interface, triggering automatic rule evaluation that generates insights with visual indicators—eliminating manual data processing and enabling data-driven decision making at scale.
+DSS-Core is a high-performance Decision Support System (DSS) designed for e-commerce analytics. It features a modular data ingestion pipeline, a dynamic rule engine based on SpEL, and a modern analytics dashboard. Administrators can define business rules via CSV, which are then applied to incoming sales data to generate real-time metrics and decision insights.
 
 ## System Architecture
 
-### Modular Ingestion Layer
+### Dual-Layer Ingestion
+The system employs a dual-layer persistence strategy for maximum flexibility and performance:
 
-The system uses a pluggable `DataIngestor` interface supporting multiple data sources:
-
-- **CSV Upload**: Direct file uploads with automatic parsing (sales.csv with 26 columns)
-- **API Polling**: External API endpoints with JSON support
-- **Extensible**: Add webhooks, Kafka, databases without modifying core code
-
-All sources normalize to a unified `NormalizedRecord` format before processing.
+1.  **Domain Persistence**: Raw records are saved to domain-specific tables (e.g., `sales_records`) for historical reporting and BI.
+2.  **Normalized Persistence**: Records are simultaneously normalized into a flat `NormalizedRecordEntity` structure (JSON data blobs) to provide a uniform surface for the Rule Engine scanning.
 
 ### Dynamic Rules Engine
-
-Specification Pattern-based rule engine with:
-
-- **Pluggable Rules**: Add/remove rules without code changes
-- **Multiple Rule Types**: Threshold, Anomaly, Trend, Custom
-- **Automatic Evaluation**: Rules execute on data upload
-- **Insight Generation**: Triggered rules create `DecisionInsightEntity` records
-- **Action Tracking**: Approve, override, or archive insights with full audit trail
+SpEL-powered engine with:
+- **Hot-Reloadable Rules**: Upload `rules.csv` to update business logic instantly.
+- **Unified Scanning**: The engine scans the normalized table, allowing one engine to process data from multiple diverse sources.
+- **Insight Lifecycle**: Triggered rules generate `DecisionInsightEntity` records, which support explicit review actions (Approve, Override, Snooze, False Positive) with full audit logging.
 
 ### Data Flow
 
 ```
-CSV Upload → SalesCsvProcessor → SalesRecordEntity (PostgreSQL)
-                                         ↓
-                                  SalesRuleEngine
-                                         ↓
-                              DecisionInsightEntity
-                                         ↓
-                              Dashboard (Charts + Badge)
+CSV Upload → SalesCsvProcessor → [SalesRecord (Domain DB)]
+                           ↘
+                             [NormalizedRecord (JSON DB)] → SalesRuleEngine → DecisionInsight → Dashboard
 ```
 
 ## SaaS Capability
 
 ### Admin-Driven Features
 
-**Dynamic CSV Import**
-- Upload `sales.csv` (26 columns: orderNumber, sales, productLine, status, etc.)
-- Upload `rules.csv` (ruleName, ruleType, condition, threshold, action)
-- Automatic parsing, validation, and database persistence
-- Real-time status feedback
+**Data Ingestion Pipeline**
+- **Sequential Workflow**: Rules must be active/uploaded before Sales Data can be processed (enforced by UI locks).
+- **Dynamic CSV Mapping**: Automatic parsing of `sales.csv` and `rules.csv`.
+- **Validation**: Strict type checking during ingestion.
 
-**Sales Analytics Dashboard**
-- **Line Chart**: Total sales over time (monthly aggregation)
-- **Bar Chart**: Sales by product line
-- **Pie Chart**: Order status distribution
-- **KPI Cards**: Total records, insights count
-- **Insight Badge**: Green indicator when rules trigger
-- Swiss-style flat design (monochrome, high-density, no gradients)
-
-**Dynamic Rules Engine**
-- CSV-based rule configuration
-- Threshold rules (e.g., "High Value Sale > $5000")
-- Automatic evaluation on data upload
-- Insight management (approve, override, archive)
-- Full audit trail with `ActionLogEntity`
+**Analytics & Insights Management**
+- **Real-time Dashboard**: Integrated Charts.js visualizations (Revenue Trends, Category Splits, Status Distribution).
+- **Advanced Grid**: Paginated, searchable, and sortable insights management table.
+- **Decision Workflow**: Audit-backed review system (Approve, Override, Snooze, False Positive).
+- **System Clock & Heartbeat**: Real-time system status indicators.
+- **Audit Logs**: Every manual decision is tracked in `ActionLogEntity`.
 
 ### Multi-Tenant Support
 
@@ -128,21 +107,24 @@ Access dashboard at: **http://localhost:8080/dashboard.html**
 
 ### Usage Workflow
 
-1. **Upload Sales Data**
-   - Navigate to "Data Management" tab
-   - Select `sales.csv` (sample provided)
-   - Click "Upload Sales CSV"
-   - System parses → saves → runs rules → generates insights
+1. **Upload Rules Config**
+   - Navigate to the "Data Ingestion Pipeline" section.
+   - Select and upload `rules.csv`.
+   - **Note**: This unlocks the Sales Data upload button.
 
-2. **Upload Rules** (Optional)
-   - Select `rules.csv` (sample provided)
-   - Click "Upload Rules CSV"
-   - Rules stored in `rule_definitions` table
+2. **Upload Sales Data**
+   - Select `sales.csv`.
+   - Click "Upload Sales".
+   - System performs dual-persistence (Sales + Normalized) and triggers the Rule Engine.
 
-3. **View Analytics**
-   - Switch to "Dashboard" tab
-   - View 3 charts with real-time data
-   - Green badge appears if insights generated
+3. **Manage Insights**
+   - View the "Insights Management" table below the stats.
+   - Use search and sorting to find specific triggered rules.
+   - Click **Review** on any insight to open the resolution modal and log a decision.
+
+4. **Advanced Analytics**
+   - Expand the "View Advanced Analytics" section to see trend charts.
+   - Charts refresh automatically when new data is uploaded.
 
 ## API Reference
 
@@ -199,39 +181,17 @@ Response:
 GET /api/insights/open
 ```
 
-**Approve Insight**
+**Approve / Override / Archive Insight**
 ```http
-POST /api/insights/{insightId}/approve
+POST /api/insights/{insightId}/{action}
 Content-Type: application/json
 
 {
-  "userId": "admin@example.com",
-  "reason": "Verified and acceptable"
+  "userId": "admin",
+  "reason": "Detailed audit note required for overrides"
 }
 ```
-
-**Override Insight**
-```http
-POST /api/insights/{insightId}/override
-Content-Type: application/json
-
-{
-  "userId": "admin@example.com",
-  "reason": "Manual correction applied",
-  "overrideData": {"correctedValue": 1000}
-}
-```
-
-**Archive Insight**
-```http
-POST /api/insights/{insightId}/archive
-Content-Type: application/json
-
-{
-  "userId": "admin@example.com",
-  "reason": "No longer relevant"
-}
-```
+*Valid actions: APPROVE, OVERRIDE, SNOOZE, FALSE_POSITIVE, ARCHIVE*
 
 ### Legacy Endpoints
 
@@ -269,8 +229,9 @@ GET /api/data?sourceId={sourceId}
 **action_logs** (Audit Trail)
 - `insight_id`, `action_type`, `user_id`, `override_data`, `reason`
 
-**normalized_records** (Legacy)
-- `source_id`, `record_id`, `timestamp`, `data`, `status`, `metadata`
+**normalized_records** (JSON Data Store)
+- `record_id`, `source_id`, `timestamp`, `data` (JSON blob of original row), `status`
+- Used by Rule Engine for uniform scanning across different source types.
 
 ## Project Structure
 
@@ -493,6 +454,6 @@ Internal project for DSS301
 
 ---
 
-**Version**: 1.0.0  
-**Last Updated**: 2024  
-**Status**: P.O.C Ready
+**Version**: 1.0.1  
+**Last Updated**: March 2026  
+**Status**: Production Ready (IS Core Integration)

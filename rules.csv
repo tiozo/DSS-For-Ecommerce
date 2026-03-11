@@ -1,7 +1,7 @@
 ruleName,ruleType,condition,threshold,action,severity
-Big Win Order,threshold,sales > threshold,10000,CELEBRATE,SUCCESS
-Bulk Order Logistics,threshold,quantityOrdered > threshold,50,NOTIFY_LOGISTICS,INFO
-Low Margin Alert,condition,priceEach < (msrp * 0.8),0,REVIEW_PRICING,WARNING
-Critical Status,condition,status == 'On Hold' || status == 'Disputed',0,IMMEDIATE_ACTION,CRITICAL
-Potential Loss,condition,sales < 0,0,FLAG_ERROR,CRITICAL
-Holiday Rush,condition,month_id == 11 || month_id == 12,0,PRIORITY_HANDLING,INFO
+"High Value Sale",threshold,sales > threshold,8000,REVIEW_ORDER,CRITICAL
+"Bulk Order Alert",threshold,quantityOrdered > threshold,45,NOTIFY_LOGISTICS,WARNING
+"Low Price Item",threshold,priceEach < threshold,35,FLAG_FOR_PRICING,INFO
+"Disputed Order",anomaly,status == 'Disputed',,HOLD_SHIPPING,CRITICAL
+"Cancelled Order",anomaly,status == 'Cancelled',,RESTOCK_INVENTORY,WARNING
+"On Hold Order",anomaly,status == 'On Hold',,CONTACT_CUSTOMER,INFO
