@@ -581,17 +581,41 @@
 
         async function submitAction(actionType) {
             const note = document.getElementById('resolutionNote').value.trim();
-            // In IS systems, audit logs (notes) are critical for override/false positives
+            
             if ((actionType === 'OVERRIDE' || actionType === 'FALSE_POSITIVE') && !note) {
                 return alert("Audit Note is required for this action.");
             }
-            console.log(`Submitting Action: ${actionType} for Insight: ${currentInsightId}`);
-            // Hypothetical API Call
-            closeModal();
-            loadDashboard();
+
+            try {
+                
+                const response = await fetch(`/api/admin/insights/${currentInsightId}/${actionType.toLowerCase()}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Tenant-ID': 'default'
+                    },
+                   
+                    body: JSON.stringify({ 
+                        reason: note, 
+                        userId: 'admin_user' 
+                    })
+                });
+
+                if (response.ok) {
+                    console.log(`Action ${actionType} executed successfully.`);
+                    closeModal();
+                   
+                    loadDashboard(); 
+                } else {
+                    const errorData = await response.json();
+                    alert("Failed to update insight: " + (errorData.error || "Unknown error"));
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                alert("Server connection error. Please try again.");
+            }
         }
 
-        // --- Charting (Fixed Pie Axis Bug) ---
         function renderCharts(data) {
             const chartData = [
                 { id: 'salesTimeChart', type: 'line', data: data.salesByMonth, color: '#1a1a1a' },
@@ -616,7 +640,6 @@
             });
         }
 
-        // --- Upload Management (Workflow Lock) ---
         async function handleUpload(type) {
             const input = document.getElementById(type + 'File');
             const status = document.getElementById(type + 'Status');

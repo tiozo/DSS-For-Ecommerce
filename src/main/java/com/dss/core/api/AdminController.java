@@ -11,7 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import java.time.LocalDateTime;
+import com.dss.core.tenant.TenantContext;
 import java.util.*;
 
 @RestController
@@ -66,17 +67,51 @@ public class AdminController {
     @GetMapping("/dashboard-stats")
     public ResponseEntity<Map<String, Object>> getDashboardStats() {
         Map<String, Object> response = new HashMap<>();
+        
+        String currentTenant = TenantContext.getTenantId();
+        log.debug("[DEBUG - DASHBOARD] Fetching stats for tenant: {}", currentTenant);
+
         response.put("salesByMonth", convertToMap(salesRepository.getSalesByMonth()));
         response.put("salesByProductLine", convertToMap(salesRepository.getSalesByProductLine()));
         response.put("statusDistribution", convertToMap(salesRepository.getStatusDistribution()));
         response.put("totalRecords", salesRepository.count());
 
-        var insights = insightRepository.findAll();
+        List<DecisionInsightEntity> insights = insightRepository.findAllByTenant(currentTenant);
+        
+        long activeInsightsCount = insightRepository.countByTenantIdAndStatus(
+            currentTenant, 
+            DecisionInsightEntity.InsightStatus.OPEN
+        );
+
+        response.put("insightCount", activeInsightsCount);
+
         response.put("insightCount", insights.size());
         response.put("hasInsights", !insights.isEmpty());
         response.put("insights", insights);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/insights/{id}/{action}")
+    public ResponseEntity<?> handleInsightAction(
+        @PathVariable Long id, 
+        @PathVariable String action,
+        @RequestBody InsightActionRequest request) {
+        
+        return insightRepository.findById(id).map(insight -> {
+            switch (action.toLowerCase()) {
+                case "approve" -> insight.setStatus(DecisionInsightEntity.InsightStatus.APPROVED);
+                case "override" -> insight.setStatus(DecisionInsightEntity.InsightStatus.OVERRIDDEN);
+                case "archive" -> insight.setStatus(DecisionInsightEntity.InsightStatus.ARCHIVED);
+                default -> insight.setStatus(DecisionInsightEntity.InsightStatus.CLOSED);
+            }
+
+            insight.setResolutionNote(request.reason());
+            insight.setResolvedAt(LocalDateTime.now()); // Sẽ không còn lỗi sau khi import
+            
+            insightRepository.save(insight);
+            return ResponseEntity.ok(Map.of("success", true));
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     @Transactional

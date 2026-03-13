@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Slf4j
 public class DecisionInsightEntity {
     
     @Id
@@ -50,6 +52,15 @@ public class DecisionInsightEntity {
     @Enumerated(EnumType.STRING)
     private InsightStatus status;
     
+    @Column(columnDefinition = "text")
+    private String resolutionNote;
+
+    @Column
+    private LocalDateTime resolvedAt;
+
+    @Column
+    private String resolvedBy;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -62,21 +73,29 @@ public class DecisionInsightEntity {
     private Long version;
     
     @PrePersist
-    protected void onPersist() {
-        if (this.tenantId == null) {
-            this.tenantId = TenantContext.getTenantId();
-        }
+protected void onPersist() {
+    if (this.tenantId == null) {
+        this.tenantId = TenantContext.getTenantId();
+        log.debug("[TENANT CHECK] Saving insight with tenant: {}", this.tenantId);
     }
+}
     
     public enum InsightType {
         THRESHOLD, ANOMALY, TREND, CUSTOM
     }
     
     public enum Severity {
-        INFO, WARNING, CRITICAL
+        INFO, WARNING, CRITICAL, SUCCESS
     }
     
     public enum InsightStatus {
-        OPEN, APPROVED, ARCHIVED
+        OPEN,
+        APPROVED,
+        RESOLVED,
+        OVERRIDDEN,
+        ARCHIVED,
+        SNOOZED,
+        FALSE_POSITIVE,
+        CLOSED
     }
 }

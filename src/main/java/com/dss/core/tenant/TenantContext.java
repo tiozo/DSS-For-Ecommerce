@@ -14,7 +14,7 @@ public class TenantContext {
     
     public static String getTenantId() {
         String id = tenantId.get();
-        return id != null ? id : "default-tenant";
+        return id != null ? id : "default";
     }
     
     public static void clear() {

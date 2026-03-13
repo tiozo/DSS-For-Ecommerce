@@ -76,7 +76,7 @@ public class SalesRuleEngine {
     
     private DecisionInsightEntity createInsight(RuleDefinitionEntity rule, SalesRecordEntity sale, String message) {
         return DecisionInsightEntity.builder()
-            .tenantId("default-tenant")
+            .tenantId("default")
             .recordId(sale.getId())
             .ruleName(rule.getRuleName())
             .insightType(DecisionInsightEntity.InsightType.THRESHOLD)

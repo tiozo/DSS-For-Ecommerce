@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStreamReader;
 import java.util.*;
+import com.dss.core.tenant.TenantContext;
+
 
 @Slf4j
 @Service
@@ -47,6 +49,7 @@ public class RuleCsvProcessor {
 
                 rules.add(DynamicRuleEntity.builder()
                         .name(row.get("ruleName"))
+                        .tenantId(TenantContext.getTenantId())
                         .expression(spelExpression)
                         .severity(severity)
                         .actionPayload(row.isMapped("action") ? row.get("action") : null)

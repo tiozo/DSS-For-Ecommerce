@@ -5,28 +5,32 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
+import java.util.Optional;
+import com.dss.core.persistence.entity.DecisionInsightEntity;
 
-/**
- * TenantAspect: Automatically injects tenant_id into repository method calls
- * Ensures all queries are scoped to the current tenant
- */
 @Aspect
 @Component
 @Slf4j
 public class TenantAspect {
     
-    @Around("execution(* com.dss.core.persistence.repository.*.find*(..))")
+    @Around("execution(* com.dss.core.persistence.repository.DecisionInsightRepository.findById(..))")
     public Object injectTenantId(ProceedingJoinPoint joinPoint) throws Throwable {
-        Object[] args = joinPoint.getArgs();
+        Object result = joinPoint.proceed(); 
         
-        // If first argument is not already a tenant ID, inject it
-        if (args.length > 0 && !(args[0] instanceof String && args[0].equals(TenantContext.getTenantId()))) {
-            Object[] newArgs = new Object[args.length + 1];
-            newArgs[0] = TenantContext.getTenantId();
-            System.arraycopy(args, 0, newArgs, 1, args.length);
-            return joinPoint.proceed(newArgs);
+        if (result instanceof Optional<?> optional && optional.isPresent()) {
+            Object entity = optional.get();
+            
+            if (entity instanceof DecisionInsightEntity insight) {
+                String currentTenant = TenantContext.getTenantId();
+                
+                if (!insight.getTenantId().equals(currentTenant)) {
+                    log.warn("Security Alert: Tenant {} tried to access Insight of Tenant {}", 
+                            currentTenant, insight.getTenantId());
+                    return Optional.empty(); 
+                }
+            }
         }
         
-        return joinPoint.proceed(args);
+        return result;
     }
 }
